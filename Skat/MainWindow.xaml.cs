@@ -215,7 +215,7 @@ namespace MynaSkat
                                     buttonReizenNo[idx].Content = $"Kein Handspiel!";
                                     buttonReizenNo[idx].Visibility = Visibility.Visible;
                                 }
-                                textBlockGame[idx].Text = $"Wird {viewPlayer.Game} spielen.";
+                                textBlockGame[idx].Text = $"Du wirst {viewPlayer.Game} spielen.";
                             }
                         }
                         textBlockStatus[idx].Text += $" Du hast {skatTable.CurrentReizValue} angesagt.";
