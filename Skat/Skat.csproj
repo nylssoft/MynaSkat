@@ -1,0 +1,83 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Images\00.gif" />
+    <None Remove="Images\01.gif" />
+    <None Remove="Images\02.gif" />
+    <None Remove="Images\03.gif" />
+    <None Remove="Images\04.gif" />
+    <None Remove="Images\05.gif" />
+    <None Remove="Images\06.gif" />
+    <None Remove="Images\07.gif" />
+    <None Remove="Images\08.gif" />
+    <None Remove="Images\09.gif" />
+    <None Remove="Images\10.gif" />
+    <None Remove="Images\11.gif" />
+    <None Remove="Images\12.gif" />
+    <None Remove="Images\13.gif" />
+    <None Remove="Images\14.gif" />
+    <None Remove="Images\15.gif" />
+    <None Remove="Images\16.gif" />
+    <None Remove="Images\17.gif" />
+    <None Remove="Images\18.gif" />
+    <None Remove="Images\19.gif" />
+    <None Remove="Images\20.gif" />
+    <None Remove="Images\21.gif" />
+    <None Remove="Images\22.gif" />
+    <None Remove="Images\23.gif" />
+    <None Remove="Images\24.gif" />
+    <None Remove="Images\25.gif" />
+    <None Remove="Images\26.gif" />
+    <None Remove="Images\27.gif" />
+    <None Remove="Images\28.gif" />
+    <None Remove="Images\29.gif" />
+    <None Remove="Images\30.gif" />
+    <None Remove="Images\31.gif" />
+    <None Remove="Images\back.gif" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\00.gif">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\01.gif" />
+    <Resource Include="Images\02.gif" />
+    <Resource Include="Images\03.gif" />
+    <Resource Include="Images\04.gif" />
+    <Resource Include="Images\05.gif" />
+    <Resource Include="Images\06.gif" />
+    <Resource Include="Images\07.gif" />
+    <Resource Include="Images\08.gif" />
+    <Resource Include="Images\09.gif" />
+    <Resource Include="Images\10.gif" />
+    <Resource Include="Images\11.gif" />
+    <Resource Include="Images\12.gif" />
+    <Resource Include="Images\13.gif" />
+    <Resource Include="Images\14.gif" />
+    <Resource Include="Images\15.gif" />
+    <Resource Include="Images\16.gif" />
+    <Resource Include="Images\17.gif" />
+    <Resource Include="Images\18.gif" />
+    <Resource Include="Images\19.gif" />
+    <Resource Include="Images\20.gif" />
+    <Resource Include="Images\21.gif" />
+    <Resource Include="Images\22.gif" />
+    <Resource Include="Images\23.gif" />
+    <Resource Include="Images\24.gif" />
+    <Resource Include="Images\25.gif" />
+    <Resource Include="Images\26.gif" />
+    <Resource Include="Images\27.gif" />
+    <Resource Include="Images\28.gif" />
+    <Resource Include="Images\29.gif" />
+    <Resource Include="Images\30.gif" />
+    <Resource Include="Images\31.gif" />
+    <Resource Include="Images\back.gif" />
+  </ItemGroup>
+
+</Project>

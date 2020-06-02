@@ -46,11 +46,10 @@ Network Trash Folder
 Temporary Items
 .apdisk
 /.vs
-/Backup/.vs
-/Backup/obj
-/Backup/bin
-/Backup/Release
-/BackupSetup/obj
+/Skat/.vs
+/Skat/obj
+/Skat/bin
+/Skat/Release
 /bin
 
 # personal user files
