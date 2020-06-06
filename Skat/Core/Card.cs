@@ -44,7 +44,7 @@ namespace MynaSkat.Core
             return ret;
         }
 
-        private int GetOrderNumber(Game game)
+        public int GetOrderNumber(Game game)
         {
             var orderNumber = InternalNumber;
             if (game.Type == GameType.Grand ||
@@ -90,7 +90,7 @@ namespace MynaSkat.Core
             cards.Sort((b, a) => a.GetOrderNumber(game).CompareTo(b.GetOrderNumber(game)));
         }
 
-        private static int GetFactor(Game game, List<Card> cards)
+        public static int GetFactor(Game game, List<Card> cards)
         {            
             int fac = 1;
             bool hasKreuzBube = cards.Any((c) => c.Value == CardValue.Bube && c.Color == CardColor.Kreuz);
@@ -143,7 +143,7 @@ namespace MynaSkat.Core
             return fac;
         }
 
-        private static int GetPoints(List<Card> pointedCards)
+        public static int GetPoints(List<Card> pointedCards)
         {
             var points = 0;
             foreach (var card in pointedCards)
@@ -189,7 +189,7 @@ namespace MynaSkat.Core
             }
         }
 
-        public static int GetScore(List<Card> cards, List<Card> pointedCards, Game game, int fac = 1)
+        public static int GetScore(int mult, List<Card> pointedCards, Game game, int fac = 1)
         {
             if (game.Type == GameType.Null)
             {
@@ -206,7 +206,6 @@ namespace MynaSkat.Core
                 {
                     gameValue = GetColorFactor(game.Color.Value);
                 }
-                int mult = GetFactor(game, cards);
                 if (game.Option == GameOption.Hand)
                 {
                     mult += 1;
@@ -224,11 +223,11 @@ namespace MynaSkat.Core
                     }
                     return -gameValue * mult * fac * 2;
                 }
-                if (points > 210)
+                if (points > 90)
                 {
                     mult += 1;
                 }
-                if (points == 240)
+                if (points == 120)
                 {
                     mult += 1;
                 }

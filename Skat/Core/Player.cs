@@ -41,6 +41,8 @@ namespace MynaSkat.Core
 
         public ReizStatus ReizStatus { get; set; } = ReizStatus.Warten;
 
+        public int Score { get; set; }
+
         public override bool Equals(object obj)
         {
             var p = obj as Player;

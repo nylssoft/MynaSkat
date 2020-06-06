@@ -13,9 +13,15 @@ namespace MynaSkat.Core
 
         public List<Card> Skat { get; set; } = new List<Card>();
 
+        public List<Card> Stich { get; set; } = new List<Card>();
+
         public Player GamePlayer { get; set; } = null;
 
         public bool GameStarted { get; set; } = false;
+
+        public int GameFactor { get; set; }
+
+        public int GameScore { get; set; } = 0;
 
         public Player CurrentPlayer { get; set; } = null;
 
@@ -92,12 +98,149 @@ namespace MynaSkat.Core
             ReizValues.Sort();
         }
 
+        public void StartNewRound()
+        {
+            foreach (var p in Players)
+            {
+                p.Points.Clear();
+                p.Cards.Clear();
+                p.Game = new Game(GameType.Grand);
+                switch (p.Position)
+                {
+
+                    case PlayerPosition.Sagen:
+                        p.Position = PlayerPosition.Hoeren;
+                        p.ReizStatus = ReizStatus.Hoeren;
+                        break;
+                    case PlayerPosition.Geben:
+                        p.Position = PlayerPosition.Sagen;
+                        p.ReizStatus = ReizStatus.Sagen;
+                        break;
+                    case PlayerPosition.Hoeren:
+                        p.Position = PlayerPosition.Geben;
+                        p.ReizStatus = ReizStatus.Warten;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            GameFactor = 0;
+            GameStarted = false;
+            GamePlayer = null;
+            GameScore = 0;
+            CurrentPlayer = null;
+            Stich.Clear();
+            Skat.Clear();
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                var deck = Card.GenerateDeck();
+                foreach (var player in Players)
+                {
+                    player.Cards.AddRange(Card.Draw(rng, deck, 10));
+                }
+                Skat.AddRange(Card.Draw(rng, deck, 2));
+            }
+            ReizSaid = false;
+            ReizValueIndex = -1;
+        }
+
         public void MoveNextReizValue()
         {
             if (ReizValueIndex < ReizValues.Count - 1)
             {
                 ReizValueIndex++;
             }
+        }
+
+        public int GetPlayerIdx(Player player)
+        {
+            int idx = 0;
+            foreach(var p in Players)
+            {
+                if (p == player) return idx;
+                idx++;
+            }
+            return -1;
+        }
+
+        public Player GetNextPlayer(Player player)
+        {
+            if (player != null)
+            {
+                var idx = GetPlayerIdx(player);
+                var nextidx = (idx + 1) % Players.Count;
+                return Players[nextidx];
+            }
+            return null;
+        }
+
+        public Player GetStichPlayer()
+        {
+            Player stichPlayer = null;
+            if (Stich.Count == 3)
+            {
+                stichPlayer = CurrentPlayer;
+                Player player = stichPlayer;
+                Card greatestCard = Stich[0];
+                Card firstCard = greatestCard;
+                for (int idx=1; idx<3; idx++)
+                {
+                    player = GetNextPlayer(player);
+                    if (IsTrumpf(firstCard) && IsTrumpf(Stich[idx]) && IsCardGreater(GamePlayer.Game, Stich[idx], greatestCard))
+                    {
+                        stichPlayer = player;
+                        greatestCard = Stich[idx];
+                    }
+                    else if (!IsTrumpf(firstCard) && IsTrumpf(Stich[idx]) && IsCardGreater(GamePlayer.Game, Stich[idx], greatestCard))
+                    {
+                        stichPlayer = player;
+                        greatestCard = Stich[idx];
+                    }
+                    else if (!IsTrumpf(firstCard) && firstCard.Color == Stich[idx].Color && IsCardGreater(GamePlayer.Game, Stich[idx], greatestCard))
+                    {
+                        stichPlayer = player;
+                        greatestCard = Stich[idx];
+                    }
+                }
+            }
+            return stichPlayer;
+        }
+
+        public bool IsValidForStich(Card card)
+        {
+            if (Stich.Count == 0) return true;
+            var first = Stich[0];
+            if (IsTrumpf(first))
+            {
+                if (IsTrumpf(card))
+                {
+                    return true;
+                }
+                var hasTrumpf = CurrentPlayer.Cards.Any( c => IsTrumpf(c));
+                return !hasTrumpf;
+            }
+            bool hasColor = CurrentPlayer.Cards.Any((c) => !IsTrumpf(c) && c.Color == first.Color);
+            return first.Color == card.Color || !hasColor;
+        }
+
+        public bool IsTrumpf(Card card)
+        {
+            Game game = GamePlayer.Game;
+            if ((game.Type == GameType.Grand || game.Type == GameType.Color) && card.Value == CardValue.Bube)
+            {
+                return true;
+            }
+            if (game.Type == GameType.Color && card.Color == game.Color)
+            {
+                return true;
+            }
+            return false;
+        }
+
+
+        public bool IsCardGreater(Game game, Card card1, Card card2)
+        {
+            return card1.GetOrderNumber(game) > card2.GetOrderNumber(game);
         }
     }
 }

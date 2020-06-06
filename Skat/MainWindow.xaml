@@ -8,7 +8,7 @@
         Background="Green"
         Loaded="Window_Loaded"
         mc:Ignorable="d"
-        Title="Myna Skat" Height="690" Width="1300">
+        Title="Myna Skat" Height="630" Width="1300">
     <Window.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="LightYellow" />
@@ -25,7 +25,7 @@
         <Style TargetType="Button">
             <Setter Property="Foreground" Value="LightYellow" />
             <Setter Property="Background" Value="DarkBlue" />
-            <Setter Property="FontSize" Value="18.0" />
+            <Setter Property="FontSize" Value="18" />
         </Style>
     </Window.Resources>
     <Grid Margin="10">
@@ -33,7 +33,6 @@
             <RowDefinition Height="160" />
             <RowDefinition Height="180" />
             <RowDefinition Height="180" />
-            <RowDefinition Height="60" />
             <RowDefinition Height="60" />
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
@@ -65,7 +64,18 @@
             <Button Grid.Row="2" Grid.Column="3" x:Name="buttonReizenYes3" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonReizen_Click"/>
             <Button Grid.Row="2" Grid.Column="4" x:Name="buttonReizenNo3" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonReizen_Click"/>
         </Grid>
-        <Grid Grid.Row="1" HorizontalAlignment="Center">
+        <Grid x:Name="gridStich" Grid.Row="1" HorizontalAlignment="Center" Visibility="Hidden">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="100" />
+            </Grid.ColumnDefinitions>
+            <Image x:Name="imageStich1" Grid.Column="0" Height="140" Width="90" MouseDown="ImageStich_MouseDown"/>
+            <Image x:Name="imageStich2" Grid.Column="1" Height="140" Width="90" MouseDown="ImageStich_MouseDown"/>
+            <Image x:Name="imageStich3" Grid.Column="2" Height="140" Width="90" MouseDown="ImageStich_MouseDown"/>
+            <Button x:Name="buttonNewGame" Grid.Column="0" Grid.ColumnSpan="3" Content="Neues Spiel" Width="120" Height="50" Click="Button_NewGame"/>
+        </Grid>		
+        <Grid x:Name="gridSkat" Grid.Row="1" HorizontalAlignment="Center">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="100" />
                 <ColumnDefinition Width="100" />
@@ -112,9 +122,6 @@
             <CheckBox x:Name="checkBoxHand" Content="Hand" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>
             <CheckBox x:Name="checkBoxSchneider" Content="Schneider" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>
             <CheckBox x:Name="checkBoxSchwarz" Content="Schwarz" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>
-        </StackPanel>
-        <StackPanel Grid.Row="4" Orientation="Horizontal">
-            <Button x:Name="buttonNewGame" Content="Neues Spiel" Width="120" Margin="10,5,10,5" Click="Button_NewGame"/>
         </StackPanel>
     </Grid>
 </Window>

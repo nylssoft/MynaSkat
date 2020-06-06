@@ -33,6 +33,7 @@ namespace MynaSkat
         private Button[] buttonReizenNo;
         private Image[] imageSkat;
         private Image[] imageCard;
+        private Image[] imageStich;
 
         public MainWindow()
         {
@@ -45,8 +46,10 @@ namespace MynaSkat
             imageSkat = new Image[] { imageSkat0, imageSkat1 };
             imageCard = new Image[] { imageCard0, imageCard1, imageCard2, imageCard3, imageCard4, imageCard5,
                 imageCard6, imageCard7, imageCard8, imageCard9, imageCard10, imageCard11};
+            imageStich = new Image[] { imageStich1, imageStich2, imageStich3 };
+
             bitmapCache = new Dictionary<int, BitmapImage>();
-            for (int idx=0; idx <32; idx++)
+            for (int idx = 0; idx < 32; idx++)
             {
                 var str = $"Images/{idx:D2}.gif";
                 var bitmap = new BitmapImage();
@@ -58,7 +61,7 @@ namespace MynaSkat
             bitmapBack = new BitmapImage();
             bitmapBack.BeginInit();
             bitmapBack.UriSource = new Uri("Images/back.gif", UriKind.Relative);
-            bitmapBack.EndInit();           
+            bitmapBack.EndInit();
         }
 
         private void CreateNewTable()
@@ -135,9 +138,9 @@ namespace MynaSkat
             foreach (var player in skatTable.Players)
             {
                 textBlockStatus[idx].Text = "";
+                textBlockGame[idx].Text = "";
                 buttonReizenYes[idx].Visibility = Visibility.Hidden;
                 buttonReizenNo[idx].Visibility = Visibility.Hidden;
-                textBlockGame[idx].Text = "";
                 if (skatTable.GamePlayer == null)
                 {
                     if (player.ReizStatus == ReizStatus.Warten)
@@ -215,7 +218,7 @@ namespace MynaSkat
                                     buttonReizenNo[idx].Content = $"Kein Handspiel!";
                                     buttonReizenNo[idx].Visibility = Visibility.Visible;
                                 }
-                                textBlockGame[idx].Text = $"Du wirst {viewPlayer.Game} spielen.";
+                                textBlockGame[idx].Text += $"Du wirst {viewPlayer.Game} spielen. ";
                             }
                         }
                         textBlockStatus[idx].Text += $" Du hast {skatTable.CurrentReizValue} angesagt.";
@@ -223,19 +226,51 @@ namespace MynaSkat
                 }
                 else
                 {
-                    if (player == skatTable.CurrentPlayer)
+                    if (player.Cards.Count == 0 && skatTable.Stich.Count == 0)
                     {
-                        textBlockStatus[idx].Text = "Ausspielen!";
+                        textBlockStatus[idx].Text = "Spiel beendet.";
+                        textBlockGame[idx].Text += $"{Card.GetPoints(player.Points)} Augen. ";
+                        if (player == skatTable.GamePlayer)
+                        {
+                            if (skatTable.GameScore > 0)
+                            {
+                                textBlockGame[idx].Text += "Gewonnen! ";
+                            }
+                            else
+                            {
+                                textBlockGame[idx].Text += "Verloren! ";
+                            }
+                            textBlockGame[idx].Text += $"Spielwert: {skatTable.GameScore}. ";
+                        }
                     }
                     else
                     {
-                        textBlockStatus[idx].Text = $"Wartet auf {skatTable.CurrentPlayer.Name}.";
-                    }
-                    if (player == skatTable.GamePlayer)
-                    {
-                        textBlockGame[idx].Text = $"Spielt {viewPlayer.Game}.";
+                        if (player == skatTable.CurrentPlayer)
+                        {
+                            if (skatTable.Stich.Count == 3)
+                            {
+                                textBlockStatus[idx].Text = "Stich einsammeln!";
+                            }
+                            else
+                            {
+                                textBlockStatus[idx].Text = "Ausspielen!";
+                            }
+                        }
+                        else
+                        {
+                            textBlockStatus[idx].Text = $"Wartet auf {skatTable.CurrentPlayer.Name}. ";
+                        }
+                        if (player == skatTable.GamePlayer)
+                        {
+                            textBlockGame[idx].Text += $"Spielt {viewPlayer.Game}. ";
+                        }
                     }
                 }
+                if (player.Position == PlayerPosition.Geben)
+                {
+                    textBlockStatus[idx].Text += " Hat gegeben.";
+                }
+                textBlockGame[idx].Text += $"{player.Score} Punkte.";
                 idx++;
             }
         }
@@ -282,6 +317,14 @@ namespace MynaSkat
 
             checkBoxSchwarz.IsEnabled = checkBoxSchneider.IsEnabled && checkBoxSchneider.IsChecked == true;
 
+            if (skatTable.GameStarted && skatTable.GamePlayer != null && skatTable.GamePlayer.Cards.Count == 0 && skatTable.Stich.Count == 0)
+            {
+                buttonNewGame.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                buttonNewGame.Visibility = Visibility.Hidden;
+            }
         }
 
         private void UpdatePlayerCards(Player player)
@@ -304,6 +347,28 @@ namespace MynaSkat
                 {
                     imageSkat[skatIdx++].Source = bitmapCache[card.InternalNumber];
                 }
+            }
+            if (skatTable.GameStarted)
+            {
+                gridStich.Visibility = Visibility.Visible;
+                gridSkat.Visibility = Visibility.Hidden;
+                for (var stichIdx = 0; stichIdx < 3; stichIdx++)
+                {
+                    if (stichIdx < skatTable.Stich.Count)
+                    {
+                        imageStich[stichIdx].Source = bitmapCache[skatTable.Stich[stichIdx].InternalNumber];
+                    }
+                    else
+                    {
+                        imageStich[stichIdx].Source = null;
+                    }
+                }
+
+            }
+            else
+            {
+                gridStich.Visibility = Visibility.Hidden;
+                gridSkat.Visibility = Visibility.Visible;
             }
             // card view with 2 extra cards for Skat
             foreach (var image in imageCard)
@@ -444,7 +509,15 @@ namespace MynaSkat
 
         private void Button_NewGame(object sender, RoutedEventArgs e)
         {
-            CreateNewTable();
+            skatTable.StartNewRound();
+            foreach (var player in skatTable.Players)
+            {
+                Card.Sort(player.Cards, player.Game);
+            }
+            imageSkat0.Source = bitmapBack;
+            imageSkat1.Source = bitmapBack;
+            SelectActivePlayer();
+            UpdateStatus();
         }
 
         private void Button_TakeSkat(object sender, RoutedEventArgs e)
@@ -470,6 +543,11 @@ namespace MynaSkat
                     skatTable.CurrentPlayer = p;
                 }
             }
+            skatTable.GameFactor = Card.GetFactor(skatTable.GamePlayer.Game, skatTable.GamePlayer.Cards);
+            if (skatTable.GamePlayer.Game.Type != GameType.Null)
+            {
+                skatTable.GamePlayer.Points.AddRange(skatTable.Skat);
+            }
             SelectActivePlayer();
             UpdateStatus();
         }
@@ -489,7 +567,7 @@ namespace MynaSkat
             var isYes = buttonReizenYes.Any((b) => b == button);
             var isNo = buttonReizenNo.Any((b) => b == button);
             // Game actions
-            if (skatTable.GamePlayer != null )
+            if (skatTable.GamePlayer != null)
             {
                 if (!skatTable.SkatTaken && checkBoxHand.IsChecked == false)
                 {
@@ -616,13 +694,9 @@ namespace MynaSkat
                 }
                 else if (skatTable.Skat.Count < 2)
                 {
-                    var images = new Image[] {
-                    imageCard0, imageCard1, imageCard2, imageCard3, imageCard4,
-                    imageCard5, imageCard6, imageCard7, imageCard8, imageCard9,
-                    imageCard10, imageCard11};
-                    for (int idx = 0; idx < images.Length; idx++)
+                    for (int idx = 0; idx < imageCard.Length; idx++)
                     {
-                        if (images[idx] == image)
+                        if (imageCard[idx] == image)
                         {
                             var card = player.Cards[idx];
                             player.Cards.RemoveAt(idx);
@@ -631,6 +705,55 @@ namespace MynaSkat
                         }
                     }
                 }
+            }
+            else if (skatTable.GameStarted && skatTable.CurrentPlayer == player)
+            {
+                for (int idx = 0; idx < imageCard.Length; idx++)
+                {
+                    if (imageCard[idx] == image)
+                    {
+                        var card = player.Cards[idx];
+                        if (!skatTable.IsValidForStich(card))
+                        {
+                            break;
+                        }
+                        if (skatTable.Stich.Count == 3)
+                        {
+                            ImageStich_MouseDown(sender, e);
+                        }
+                        var playerIdx = GetPlayerIndex(player);
+                        player.Cards.RemoveAt(idx);
+                        var nextPlayerIdx = (playerIdx + 1) % 3;
+                        skatTable.CurrentPlayer = skatTable.Players[nextPlayerIdx];
+                        skatTable.Stich.Add(card);
+                        if (skatTable.Stich.Count == 3)
+                        {
+                            var stichPlayer = skatTable.GetStichPlayer();
+                            stichPlayer.Points.AddRange(skatTable.Stich);
+                            skatTable.CurrentPlayer = stichPlayer;
+                        }
+                        SelectActivePlayer();
+                        break;
+                    }
+                }
+            }
+            UpdateStatus();
+        }
+
+        private void ImageStich_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var player = GetPlayer();
+            if (init || player == null) return;
+            var image = sender as Image;
+            if (skatTable.GameStarted && skatTable.CurrentPlayer == player && skatTable.Stich.Count >= 3)
+            {
+                skatTable.Stich.Clear();
+            }
+            if (player.Cards.Count == 0)
+            {
+                var score = Card.GetScore(skatTable.GameFactor, skatTable.GamePlayer.Points, skatTable.GamePlayer.Game);
+                skatTable.GamePlayer.Score += score;
+                skatTable.GameScore = score;
             }
             UpdateStatus();
         }
