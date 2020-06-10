@@ -159,19 +159,19 @@ namespace MynaSkat.Core
                     mult++;
                 }
                 var calc = mult == 1 ? $"{wert}" : $"{mult} x {wert}";
-                spielwert.Ueberreizt = true;
-                spielwert.Gewonnen = false;
-                spielwert.Punkte *= -2;
                 string spiel;
                 if (Type != GameType.Color)
                 {
-                    spiel = $"{Type} ";
+                    spiel = $"{Type}";
                 }
                 else
                 {
-                    spiel = $"{Color} ";
+                    spiel = $"{Color}";
                 }
-                spielwert.Beschreibung = $"Überreizt mit {reizValue}! {spiel}: {calc} x -2 = {spielwert.Punkte}.";
+                spielwert.Ueberreizt = true;
+                spielwert.Gewonnen = false;
+                spielwert.Punkte *= -2;
+                spielwert.Beschreibung = $"Überreizt mit {reizValue}! Verloren! {spiel} : {calc} x -2 = {spielwert.Punkte}.";
             }
             else
             {
