@@ -17,9 +17,6 @@ using System.Windows.Shapes;
 
 namespace MynaSkat
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private SkatTable skatTable;
@@ -218,7 +215,7 @@ namespace MynaSkat
                                     buttonReizenNo[idx].Content = $"Kein Handspiel!";
                                     buttonReizenNo[idx].Visibility = Visibility.Visible;
                                 }
-                                textBlockGame[idx].Text += $"Du wirst {viewPlayer.Game} spielen. ";
+                                textBlockGame[idx].Text += $"Du wirst {viewPlayer.Game.GetGameText()} spielen. ";
                             }
                         }
                         textBlockStatus[idx].Text += $" Du hast {skatTable.CurrentReizValue} angesagt.";
@@ -229,7 +226,12 @@ namespace MynaSkat
                     if (player.Cards.Count == 0 && skatTable.Stich.Count == 0)
                     {
                         textBlockStatus[idx].Text = "Spiel beendet.";
-                        textBlockGame[idx].Text += $"{Card.GetPoints(player.Points)} Augen. ";
+                        List<Card> skat = null;
+                        if (player == skatTable.GamePlayer && player.Game.Type != GameType.Null)
+                        {
+                            skat = skatTable.Skat;
+                        }
+                        textBlockGame[idx].Text += $"{Card.GetAugen(player.Stiche, skat)} Augen. ";
                         if (player == skatTable.GamePlayer)
                         {
                             if (skatTable.GameScore > 0)
@@ -239,6 +241,10 @@ namespace MynaSkat
                             else
                             {
                                 textBlockGame[idx].Text += "Verloren! ";
+                                if (skatTable.UeberReizt)
+                                {
+                                    textBlockGame[idx].Text += $" {skatTable.CurrentReizValue} angesagt. Ueberreizt! ";
+                                }
                             }
                             textBlockGame[idx].Text += $"Spielwert: {skatTable.GameScore}. ";
                         }
@@ -262,7 +268,8 @@ namespace MynaSkat
                         }
                         if (player == skatTable.GamePlayer)
                         {
-                            textBlockGame[idx].Text += $"Spielt {viewPlayer.Game}. ";
+                            textBlockGame[idx].Text += $"Spielt {viewPlayer.Game.GetGameText()}. ";
+                            textBlockGame[idx].Text += $"Hat {skatTable.CurrentReizValue} gesagt. ";
                         }
                     }
                 }
@@ -279,18 +286,6 @@ namespace MynaSkat
         {
             var player = GetPlayer();
             if (init || player == null) return;
-            /*
-            buttonTakeSkat.IsEnabled =
-                !skatTable.GameStarted &&
-                !skatTable.SkatTaken &&
-                skatTable.GamePlayer == player &&
-                checkBoxHand.IsChecked == false;
-            buttonStartGame.IsEnabled =
-                !skatTable.GameStarted &&
-                skatTable.GamePlayer == player &&
-                skatTable.Skat.Count == 2 &&
-                (checkBoxHand.IsChecked == true || skatTable.SkatTaken);
-            */
             radionButtonGrand.IsEnabled = !skatTable.GameStarted;
             radionButtonNull.IsEnabled = !skatTable.GameStarted;
             radionButtonKreuz.IsEnabled = !skatTable.GameStarted;
@@ -534,6 +529,19 @@ namespace MynaSkat
             var player = GetPlayer();
             if (init || player != skatTable.GamePlayer ||
                 skatTable.Skat.Count != 2 || skatTable.GameStarted) return;
+            List<Card> skat = null;
+            if (!player.Game.Option.HasFlag(GameOption.Hand))
+            {
+                skat = skatTable.Skat;
+            }
+            var spitzen = player.Game.GetSpitzen(player.Cards, skat);
+            var reizvalue = player.Game.GetReizValue(spitzen);
+            if (reizvalue < skatTable.CurrentReizValue)
+            {
+                if (MessageBox.Show($"Der Reizwert für das Spiel {skatTable.GamePlayer.Game} ist {reizvalue}. Du hast aber bis {skatTable.CurrentReizValue} gereizt. Willst Du trotzdem spielen?",
+                    "Reizen", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                    return;
+            }
             skatTable.GameStarted = true;
             foreach (var p in skatTable.Players)
             {
@@ -543,11 +551,8 @@ namespace MynaSkat
                     skatTable.CurrentPlayer = p;
                 }
             }
-            skatTable.GameFactor = Card.GetFactor(skatTable.GamePlayer.Game, skatTable.GamePlayer.Cards);
-            if (skatTable.GamePlayer.Game.Type != GameType.Null)
-            {
-                skatTable.GamePlayer.Points.AddRange(skatTable.Skat);
-            }
+            // spitzen mit skat
+            skatTable.Spitzen = player.Game.GetSpitzen(player.Cards, skat);
             SelectActivePlayer();
             UpdateStatus();
         }
@@ -712,14 +717,14 @@ namespace MynaSkat
                 {
                     if (imageCard[idx] == image)
                     {
+                        if (skatTable.Stich.Count == 3)
+                        {
+                            ImageStich_MouseDown(sender, e);
+                        }
                         var card = player.Cards[idx];
                         if (!skatTable.IsValidForStich(card))
                         {
                             break;
-                        }
-                        if (skatTable.Stich.Count == 3)
-                        {
-                            ImageStich_MouseDown(sender, e);
                         }
                         var playerIdx = GetPlayerIndex(player);
                         player.Cards.RemoveAt(idx);
@@ -729,7 +734,7 @@ namespace MynaSkat
                         if (skatTable.Stich.Count == 3)
                         {
                             var stichPlayer = skatTable.GetStichPlayer();
-                            stichPlayer.Points.AddRange(skatTable.Stich);
+                            stichPlayer.Stiche.AddRange(skatTable.Stich);
                             skatTable.CurrentPlayer = stichPlayer;
                         }
                         SelectActivePlayer();
@@ -751,9 +756,33 @@ namespace MynaSkat
             }
             if (player.Cards.Count == 0)
             {
-                var score = Card.GetScore(skatTable.GameFactor, skatTable.GamePlayer.Points, skatTable.GamePlayer.Game);
-                skatTable.GamePlayer.Score += score;
+                int score;
+                var reizvalue = skatTable.GamePlayer.Game.GetReizValue(skatTable.Spitzen);
+                if (reizvalue < skatTable.CurrentReizValue)
+                {
+                    int grundwert;
+                    if (skatTable.GamePlayer.Game.Type == GameType.Null)
+                    {
+                        grundwert = skatTable.GamePlayer.Game.GetBestaendigerWert();
+                    }
+                    else
+                    {
+                        grundwert = skatTable.GamePlayer.Game.GetGrundWert();
+                    }
+                    score = grundwert;
+                    while (score < skatTable.CurrentReizValue)
+                    {
+                        score += grundwert;
+                    }
+                    score *= -2;
+                    skatTable.UeberReizt = true;                    
+                }
+                else
+                {
+                    score = skatTable.GamePlayer.Game.GetSpielWert(skatTable.Spitzen, skatTable.GamePlayer.Stiche, skatTable.Skat);
+                }
                 skatTable.GameScore = score;
+                skatTable.GamePlayer.Score += score;
             }
             UpdateStatus();
         }

@@ -37,7 +37,7 @@ namespace MynaSkat.Core
 
         public List<Card> Cards { get; set; } = new List<Card>();
 
-        public List<Card> Points { get; set; } = new List<Card>();
+        public List<Card> Stiche { get; set; } = new List<Card>();
 
         public ReizStatus ReizStatus { get; set; } = ReizStatus.Warten;
 

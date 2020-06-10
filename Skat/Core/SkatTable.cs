@@ -19,7 +19,7 @@ namespace MynaSkat.Core
 
         public bool GameStarted { get; set; } = false;
 
-        public int GameFactor { get; set; }
+        public Spitzen Spitzen { get; set; }
 
         public int GameScore { get; set; } = 0;
 
@@ -50,9 +50,10 @@ namespace MynaSkat.Core
                 return 0;
             }
         }
-
        
         public bool ReizSaid { get; set; } = false;
+
+        public bool UeberReizt { get; set; } = false;
 
         private int ReizValueIndex { get; set; } = -1;
 
@@ -102,7 +103,7 @@ namespace MynaSkat.Core
         {
             foreach (var p in Players)
             {
-                p.Points.Clear();
+                p.Stiche.Clear();
                 p.Cards.Clear();
                 p.Game = new Game(GameType.Grand);
                 switch (p.Position)
@@ -124,7 +125,7 @@ namespace MynaSkat.Core
                         break;
                 }
             }
-            GameFactor = 0;
+            Spitzen = null;
             GameStarted = false;
             GamePlayer = null;
             GameScore = 0;
@@ -142,6 +143,7 @@ namespace MynaSkat.Core
             }
             ReizSaid = false;
             ReizValueIndex = -1;
+            UeberReizt = false;
         }
 
         public void MoveNextReizValue()

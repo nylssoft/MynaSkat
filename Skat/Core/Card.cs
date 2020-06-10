@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 
 namespace MynaSkat.Core
@@ -90,150 +92,37 @@ namespace MynaSkat.Core
             cards.Sort((b, a) => a.GetOrderNumber(game).CompareTo(b.GetOrderNumber(game)));
         }
 
-        public static int GetFactor(Game game, List<Card> cards)
-        {            
-            int fac = 1;
-            bool hasKreuzBube = cards.Any((c) => c.Value == CardValue.Bube && c.Color == CardColor.Kreuz);
-            bool hasPikBube = cards.Any((c) => c.Value == CardValue.Bube && c.Color == CardColor.Pik);
-            bool hasHerzBube = cards.Any((c) => c.Value == CardValue.Bube && c.Color == CardColor.Herz);
-            bool hasKaroBube = cards.Any((c) => c.Value == CardValue.Bube && c.Color == CardColor.Karo);
-            if (hasKreuzBube)
-            {
-                fac += 1; // mit 1 spielt...
-                if (hasPikBube)
-                {
-                    fac += 1;
-                    if (hasHerzBube)
-                    {
-                        fac += 1;
-                        if (hasKaroBube)
-                        {
-                            fac += 1;
-                            // @TODO: mit 5 spielt 6, mit 6 spielt 7...?
-                            // geht viel besser...
-                        }
-                    }
-                }
-            }
-            else
-            {
-                fac += 1; // ohne 1 spielt 2
-                if (!hasPikBube)
-                {
-                    fac += 1; // spielt 3
-                    if (!hasHerzBube)
-                    {
-                        fac += 1; // spielt 4
-                        if (!hasKaroBube && game.Type == GameType.Color)
-                        {
-                            fac += 1; // spielt 5
-                            if (!(cards.Any((c) => c.Value == CardValue.Ass && c.Color == game.Color)))
-                            {
-                                fac += 1; // spielt 6
-                                if (!(cards.Any((c) => c.Value == CardValue.Ziffer10 && c.Color == game.Color)))
-                                {
-                                    fac += 1; // spielt 7
-                                    // @TODO: is going much better...
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return fac;
-        }
-
-        public static int GetPoints(List<Card> pointedCards)
+        public int Augen
         {
-            var points = 0;
-            foreach (var card in pointedCards)
+            get
             {
-                switch (card.Value)
+                switch (Value)
                 {
                     case CardValue.Bube:
-                        points += 2;
-                        break;
+                        return 2;
                     case CardValue.Dame:
-                        points += 3;
-                        break;
+                        return 3;
                     case CardValue.Koenig:
-                        points += 4;
-                        break;
+                        return 4;
                     case CardValue.Ziffer10:
-                        points += 10;
-                        break;
+                        return 10;
                     case CardValue.Ass:
-                        points += 11;
-                        break;
+                        return 11;
                     default:
                         break;
                 }
-            }
-            return points;
-        }
-
-        private static int GetColorFactor(CardColor cardColor)
-        {
-            switch (cardColor)
-            {
-                case CardColor.Kreuz:
-                    return 12;
-                case CardColor.Pik:
-                    return 11;
-                case CardColor.Herz:
-                    return 10;
-                case CardColor.Karo:
-                    return 9;
-                default:
-                    throw new ArgumentException("Invalid card color");
+                return 0;
             }
         }
 
-        public static int GetScore(int mult, List<Card> pointedCards, Game game, int fac = 1)
+        public static int GetAugen(List<Card> stichList, List<Card> skat)
         {
-            if (game.Type == GameType.Null)
+            var augen = stichList.Sum(c => c.Augen);
+            if (skat != null)
             {
-                if (game.Option == GameOption.Hand)
-                {
-                    return pointedCards.Count > 0 ? -118 * fac : 59 * fac;
-                }
-                return pointedCards.Count > 0 ? -46 * fac : 23 * fac;
+                augen += skat.Sum(c => c.Augen);
             }
-            if (game.Type == GameType.Grand || game.Type == GameType.Color)
-            {
-                int gameValue = 24;
-                if (game.Type == GameType.Color)
-                {
-                    gameValue = GetColorFactor(game.Color.Value);
-                }
-                if (game.Option == GameOption.Hand)
-                {
-                    mult += 1;
-                }
-                var points = GetPoints(pointedCards);
-                if (points<=60)
-                {
-                    if (points < 30)
-                    {
-                        mult += 1;
-                    }
-                    if (points == 0)
-                    {
-                        mult += 1;
-                    }
-                    return -gameValue * mult * fac * 2;
-                }
-                if (points > 90)
-                {
-                    mult += 1;
-                }
-                if (points == 120)
-                {
-                    mult += 1;
-                }
-                return gameValue * mult * fac;
-            }
-            return 0;
+            return augen;
         }
 
         private static Card DrawOne(RNGCryptoServiceProvider rng, List<Card> deck)
