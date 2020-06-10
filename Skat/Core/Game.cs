@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Threading.Tasks;
 
 namespace MynaSkat.Core
@@ -135,25 +136,119 @@ namespace MynaSkat.Core
             return augen >= 61;
         }
 
-        public int GetSpielWert(Spitzen spitzen, List<Card> stichList, List<Card> skat)
+        public Spielwert GetSpielWert(Spitzen spitzen, List<Card> stichList, List<Card> skat, int reizValue)
         {
-            int spielwert;
-            if (Type == GameType.Null)
+            var spielwert = new Spielwert();
+            var gameReizValue = GetReizValue(spitzen);
+            if (gameReizValue < reizValue)
             {
-                spielwert = GetBestaendigerWert();
+                int wert;
+                if (Type == GameType.Null)
+                {
+                    wert = GetBestaendigerWert();
+                }
+                else
+                {
+                    wert = GetGrundWert();
+                }
+                spielwert.Punkte = wert;
+                int mult = 1;
+                while (spielwert.Punkte < reizValue)
+                {
+                    spielwert.Punkte += wert;
+                    mult++;
+                }
+                var calc = mult == 1 ? $"{wert}" : $"{mult} x {wert}";
+                spielwert.Ueberreizt = true;
+                spielwert.Gewonnen = false;
+                spielwert.Punkte *= -2;
+                string spiel;
+                if (Type != GameType.Color)
+                {
+                    spiel = $"{Type} ";
+                }
+                else
+                {
+                    spiel = $"{Color} ";
+                }
+                spielwert.Beschreibung = $"Überreizt mit {reizValue}! {spiel}: {calc} x -2 = {spielwert.Punkte}.";
             }
             else
             {
-                var mult = spitzen.Anzahl;
-                var augen = Card.GetAugen(stichList, skat);
-                bool schneider = augen >= 90;
-                bool schwarz = stichList.Count == 10;
-                mult += GetGewinnStufe(schneider, schwarz);
-                spielwert = GetGrundWert() * mult;
-            }
-            if (!IsWinner(stichList, skat))
-            {
-                spielwert *= -2;
+                string calc;
+                string spiel;
+                int wert;
+                int mult = 1;
+                if (Type == GameType.Null)
+                {
+                    wert = GetBestaendigerWert();
+                    spielwert.Punkte = wert;
+                    spiel = $"{Type} ";
+                    if (Option != GameOption.None)
+                    {
+                        spiel += $" {Option}";
+                    }
+                }
+                else
+                {
+                    var mit = spitzen.Mit ? "Mit" : "Ohne";
+                    spiel = $"{mit} {spitzen.Anzahl} spielt {spitzen.Spielt} ";
+                    mult = spitzen.Spielt;
+                    var augen = Card.GetAugen(stichList, skat);
+                    bool schneider = augen >= 90;
+                    bool schwarz = stichList.Count == 10;
+                    if (Option.HasFlag(GameOption.Hand))
+                    {
+                        mult++;
+                        spiel += $"Hand {mult} ";
+                    }
+                    if (Option.HasFlag(GameOption.Ouvert))
+                    {
+                        mult++;
+                        spiel += $"Ouvert {mult} ";
+                    }
+                    if (schneider)
+                    {
+                        mult++;
+                        spiel += $"Schneider {mult} ";
+                    }
+                    if (Option.HasFlag(GameOption.Schneider))
+                    {
+                        mult++;
+                        spiel += $"Angesagt {mult} ";
+                    }
+                    if (schwarz)
+                    {
+                        mult++;
+                        spiel += $"Schwarz {mult} ";
+                    }
+                    if (Option.HasFlag(GameOption.Schwarz))
+                    {
+                        mult++;
+                        spiel += $"Angesagt {mult} ";
+                    }
+                    if (Type != GameType.Color)
+                    {
+                        spiel += $"{Type} ";
+                    }
+                    else
+                    {
+                        spiel += $"{Color} ";
+                    }
+                    wert = GetGrundWert();
+                }
+                spielwert.Punkte = mult * wert;
+                calc = $"{mult} x {wert}";
+                if (!IsWinner(stichList, skat))
+                {
+                    spielwert.Punkte *= -2;
+                    spielwert.Gewonnen = false;
+                    spielwert.Beschreibung = $"Verloren! {spiel}: {calc} x -2 = {spielwert.Punkte}.";
+                }
+                else
+                {
+                    spielwert.Beschreibung = $"Gewonnen! {spiel}: {calc} = {spielwert.Punkte}.";
+                }
             }
             return spielwert;
         }
@@ -164,48 +259,25 @@ namespace MynaSkat.Core
             {
                 return GetBestaendigerWert();
             }
-            return (spitzen.Anzahl + GetGewinnStufe()) * GetGrundWert();
-        }
-
-        /// <summary>
-        /// Returns the factor for a game win.
-        /// </summary>
-        /// <param name="schneider">true if schneider;false otherwise</param>
-        /// <param name="schwarz">true if schwarz; false otherwise</param>
-        /// <returns>factor for game win</returns>
-        public int GetGewinnStufe(bool schneider = false, bool schwarz = false)
-        {
-            int stufe = 1;
-            if (Type == GameType.Grand || Type == GameType.Color)
+            int mult = spitzen.Spielt;
+            if (Option.HasFlag(GameOption.Hand))
             {
-                if (Option.HasFlag(GameOption.Hand))
-                {
-                    stufe++;
-                }
-                if (schneider)
-                {
-                    stufe++;
-                }
-                if (Option.HasFlag(GameOption.Schneider))
-                {
-                    stufe++;
-                }
-                if (schwarz)
-                {
-                    stufe++;
-                }
-                if (Option.HasFlag(GameOption.Schwarz))
-                {
-                    stufe++;
-                }
-                if (Option.HasFlag(GameOption.Ouvert))
-                {
-                    stufe++;
-                }
+                mult++;
             }
-            return stufe;
+            if (Option.HasFlag(GameOption.Ouvert))
+            {
+                mult++;
+            }
+            if (Option.HasFlag(GameOption.Schneider))
+            {
+                mult++;
+            }
+            if (Option.HasFlag(GameOption.Schwarz))
+            {
+                mult++;
+            }
+            return mult * GetGrundWert();
         }
-
         
         /// <summary>
         /// Returns the value for the Null game.

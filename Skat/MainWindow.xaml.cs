@@ -234,19 +234,7 @@ namespace MynaSkat
                         textBlockGame[idx].Text += $"{Card.GetAugen(player.Stiche, skat)} Augen. ";
                         if (player == skatTable.GamePlayer)
                         {
-                            if (skatTable.GameScore > 0)
-                            {
-                                textBlockGame[idx].Text += "Gewonnen! ";
-                            }
-                            else
-                            {
-                                textBlockGame[idx].Text += "Verloren! ";
-                                if (skatTable.UeberReizt)
-                                {
-                                    textBlockGame[idx].Text += $" {skatTable.CurrentReizValue} angesagt. Ueberreizt! ";
-                                }
-                            }
-                            textBlockGame[idx].Text += $"Spielwert: {skatTable.GameScore}. ";
+                            textBlockGame[idx].Text += $"{skatTable.Spielwert.Beschreibung} ";
                         }
                     }
                     else
@@ -749,40 +737,15 @@ namespace MynaSkat
         {
             var player = GetPlayer();
             if (init || player == null) return;
-            var image = sender as Image;
             if (skatTable.GameStarted && skatTable.CurrentPlayer == player && skatTable.Stich.Count >= 3)
             {
                 skatTable.Stich.Clear();
             }
             if (player.Cards.Count == 0)
             {
-                int score;
-                var reizvalue = skatTable.GamePlayer.Game.GetReizValue(skatTable.Spitzen);
-                if (reizvalue < skatTable.CurrentReizValue)
-                {
-                    int grundwert;
-                    if (skatTable.GamePlayer.Game.Type == GameType.Null)
-                    {
-                        grundwert = skatTable.GamePlayer.Game.GetBestaendigerWert();
-                    }
-                    else
-                    {
-                        grundwert = skatTable.GamePlayer.Game.GetGrundWert();
-                    }
-                    score = grundwert;
-                    while (score < skatTable.CurrentReizValue)
-                    {
-                        score += grundwert;
-                    }
-                    score *= -2;
-                    skatTable.UeberReizt = true;                    
-                }
-                else
-                {
-                    score = skatTable.GamePlayer.Game.GetSpielWert(skatTable.Spitzen, skatTable.GamePlayer.Stiche, skatTable.Skat);
-                }
-                skatTable.GameScore = score;
-                skatTable.GamePlayer.Score += score;
+                var game = skatTable.GamePlayer.Game;
+                skatTable.Spielwert = game.GetSpielWert(skatTable.Spitzen, skatTable.GamePlayer.Stiche, skatTable.Skat, skatTable.CurrentReizValue);
+                skatTable.GamePlayer.Score += skatTable.Spielwert.Punkte;
             }
             UpdateStatus();
         }

@@ -21,7 +21,7 @@ namespace MynaSkat.Core
 
         public Spitzen Spitzen { get; set; }
 
-        public int GameScore { get; set; } = 0;
+        public Spielwert Spielwert { get; set; }
 
         public Player CurrentPlayer { get; set; } = null;
 
@@ -128,7 +128,7 @@ namespace MynaSkat.Core
             Spitzen = null;
             GameStarted = false;
             GamePlayer = null;
-            GameScore = 0;
+            Spielwert = null;
             CurrentPlayer = null;
             Stich.Clear();
             Skat.Clear();
