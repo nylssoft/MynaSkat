@@ -8,7 +8,7 @@
         Background="Green"
         Loaded="Window_Loaded"
         mc:Ignorable="d"
-        Title="Myna Skat" Height="630" Width="1300">
+        Title="Myna Skat" Height="780" Width="1300">
     <Window.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="LightYellow" />
@@ -30,16 +30,20 @@
     </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="160" />
+            <RowDefinition Height="310" />
             <RowDefinition Height="180" />
             <RowDefinition Height="180" />
             <RowDefinition Height="60" />
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="50" />
-                <RowDefinition Height="50" />
-                <RowDefinition Height="50" />
+                <RowDefinition Height="40" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="40" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="40" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="100" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -47,22 +51,51 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="160" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <RadioButton GroupName="player" Margin="0,0,60,0" Grid.Row="0" Grid.Column="0" x:Name="radioButtonPlayer1" Content="Player 1" VerticalAlignment="Center" Click="RadioButtonPlayer_Click"/>
             <TextBlock Margin="0,0,5,0" Grid.Row="0" Grid.Column="1" x:Name="textBlockStatus1" Text="Status1" VerticalAlignment="Center"/>
-            <TextBlock Foreground="Aqua" Grid.Row="0" Grid.Column="2" x:Name="textBlockGame1" VerticalAlignment="Center" />
             <Button Grid.Row="0" Grid.Column="3" x:Name="buttonReizenYes1" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonReizen_Click"/>
             <Button Grid.Row="0" Grid.Column="4" x:Name="buttonReizenNo1" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonReizen_Click"/>
-            <RadioButton GroupName="player" Margin="0,0,60,0" Grid.Row="1" Grid.Column="0" x:Name="radioButtonPlayer2" Content="Player 2" VerticalAlignment="Center" Click="RadioButtonPlayer_Click"/>
-            <TextBlock Margin="0,0,5,0" Grid.Row="1" Grid.Column="1" x:Name="textBlockStatus2" Text="Status1" VerticalAlignment="Center"/>
-            <TextBlock Foreground="Aqua" Grid.Row="1" Grid.Column="2" x:Name="textBlockGame2" VerticalAlignment="Center" />
-            <Button Grid.Row="1" Grid.Column="3" x:Name="buttonReizenYes2" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonReizen_Click"/>
-            <Button Grid.Row="1" Grid.Column="4" x:Name="buttonReizenNo2" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonReizen_Click"/>
-            <RadioButton GroupName="player" Margin="0,0,60,0" Grid.Row="2" Grid.Column="0" x:Name="radioButtonPlayer3" Content="Player 3" VerticalAlignment="Center" Click="RadioButtonPlayer_Click"/>
-            <TextBlock Margin="0,0,5,0" Grid.Row="2" Grid.Column="1" x:Name="textBlockStatus3" Text="Status1" VerticalAlignment="Center"/>
-            <TextBlock Foreground="Aqua" Grid.Row="2" Grid.Column="2" x:Name="textBlockGame3" VerticalAlignment="Center" />
-            <Button Grid.Row="2" Grid.Column="3" x:Name="buttonReizenYes3" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonReizen_Click"/>
-            <Button Grid.Row="2" Grid.Column="4" x:Name="buttonReizenNo3" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonReizen_Click"/>
+            <TextBlock Foreground="Aqua" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5" x:Name="textBlockGame1" VerticalAlignment="Center" />
+
+            <RadioButton GroupName="player" Margin="0,0,60,0" Grid.Row="2" Grid.Column="0" x:Name="radioButtonPlayer2" Content="Player 2" VerticalAlignment="Center" Click="RadioButtonPlayer_Click"/>
+            <TextBlock Margin="0,0,5,0" Grid.Row="2" Grid.Column="1" x:Name="textBlockStatus2" Text="Status1" VerticalAlignment="Center"/>
+            <Button Grid.Row="2" Grid.Column="3" x:Name="buttonReizenYes2" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonReizen_Click"/>
+            <Button Grid.Row="2" Grid.Column="4" x:Name="buttonReizenNo2" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonReizen_Click"/>
+            <TextBlock Foreground="Aqua" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="5" x:Name="textBlockGame2" VerticalAlignment="Center" />
+            
+            <RadioButton GroupName="player" Margin="0,0,60,0" Grid.Row="4" Grid.Column="0" x:Name="radioButtonPlayer3" Content="Player 3" VerticalAlignment="Center" Click="RadioButtonPlayer_Click"/>
+            <TextBlock Margin="0,0,5,0" Grid.Row="4" Grid.Column="1" x:Name="textBlockStatus3" Text="Status1" VerticalAlignment="Center"/>
+            <Button Grid.Row="4" Grid.Column="3" x:Name="buttonReizenYes3" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonReizen_Click"/>
+            <Button Grid.Row="4" Grid.Column="4" x:Name="buttonReizenNo3" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonReizen_Click"/>
+            <TextBlock Foreground="Aqua" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="5" x:Name="textBlockGame3" VerticalAlignment="Center" />
+
+            <StackPanel Height="100" x:Name="stackPanelOuvert" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="6"
+                        Orientation="Horizontal" HorizontalAlignment="Left">
+                <Image x:Name="imageOuvert0" Source="Images/Back.gif" Margin="0,0,5,0"/>
+                <Image x:Name="imageOuvert1" Source="Images/Back.gif" Margin="0,0,5,0"/>
+                <Image x:Name="imageOuvert2" Source="Images/Back.gif" Margin="0,0,5,0"/>
+                <Image x:Name="imageOuvert3" Source="Images/Back.gif" Margin="0,0,5,0"/>
+                <Image x:Name="imageOuvert4" Source="Images/Back.gif" Margin="0,0,5,0"/>
+                <Image x:Name="imageOuvert5" Source="Images/Back.gif" Margin="0,0,5,0"/>
+                <Image x:Name="imageOuvert6" Source="Images/Back.gif" Margin="0,0,5,0"/>
+                <Image x:Name="imageOuvert7" Source="Images/Back.gif" Margin="0,0,5,0"/>
+                <Image x:Name="imageOuvert8" Source="Images/Back.gif" Margin="0,0,5,0"/>
+                <Image x:Name="imageOuvert9" Source="Images/Back.gif" Margin="0,0,50,0"/>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="1" HorizontalAlignment="Right">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="140" />
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="100" />
+            </Grid.ColumnDefinitions>
+            <CheckBox Grid.Column="0" x:Name="checkBoxLastStich" VerticalAlignment="Center" Content="Letzter Stich" Click="CheckBoxLastStich_Click" IsEnabled="False"/>
+            <Image Grid.Column="1" x:Name="imageLastStich0" Height="140" Width="90" Source="Images/Back.gif"/>
+            <Image Grid.Column="2" x:Name="imageLastStich1" Height="140" Width="90" Source="Images/Back.gif"/>
+            <Image Grid.Column="3" x:Name="imageLastStich2" Height="140" Width="90" Source="Images/Back.gif" />
         </Grid>
         <Grid x:Name="gridStich" Grid.Row="1" HorizontalAlignment="Center" Visibility="Hidden">
             <Grid.ColumnDefinitions>

@@ -31,6 +31,8 @@ namespace MynaSkat
         private Image[] imageSkat;
         private Image[] imageCard;
         private Image[] imageStich;
+        private Image[] imageOuvert;
+        private Image[] imageLastStich;
 
         public MainWindow()
         {
@@ -44,7 +46,9 @@ namespace MynaSkat
             imageCard = new Image[] { imageCard0, imageCard1, imageCard2, imageCard3, imageCard4, imageCard5,
                 imageCard6, imageCard7, imageCard8, imageCard9, imageCard10, imageCard11};
             imageStich = new Image[] { imageStich1, imageStich2, imageStich3 };
-
+            imageOuvert = new Image[] { imageOuvert0, imageOuvert1, imageOuvert2, imageOuvert3, imageOuvert4, imageOuvert5,
+                imageOuvert6, imageOuvert7, imageOuvert8, imageOuvert9 };
+            imageLastStich = new Image[] { imageLastStich0, imageLastStich1, imageLastStich2 };
             bitmapCache = new Dictionary<int, BitmapImage>();
             for (int idx = 0; idx < 32; idx++)
             {
@@ -118,6 +122,8 @@ namespace MynaSkat
             // sort and update cards for viewed player
             Card.Sort(viewPlayer.Cards, viewPlayer.Game);
             UpdatePlayerCards(viewPlayer);
+            UpdateOuvertCards(viewPlayer);
+            UpdateLastStichCards(viewPlayer);
             // update game type for viewed player
             radionButtonGrand.IsChecked = viewPlayer.Game.Type == GameType.Grand;
             radionButtonNull.IsChecked = viewPlayer.Game.Type == GameType.Null;
@@ -201,6 +207,7 @@ namespace MynaSkat
                                 buttonReizenYes[idx].Visibility = Visibility.Visible;
                                 buttonReizenNo[idx].Content = "Hand spielen";
                                 buttonReizenNo[idx].Visibility = Visibility.Visible;
+                                textBlockGame[idx].Text += $"Du wirst {viewPlayer.Game.GetGameText()} spielen. ";
                             }
                         }
                         else
@@ -281,24 +288,27 @@ namespace MynaSkat
             radionButtonHerz.IsEnabled = !skatTable.GameStarted;
             radionButtonKaro.IsEnabled = !skatTable.GameStarted;
 
-            checkBoxHand.IsEnabled =
-                !skatTable.GameStarted &&
-                !skatTable.SkatTaken &&
-                skatTable.GamePlayer == player;
-
             checkBoxOuvert.IsEnabled =
                 !skatTable.GameStarted &&
                 skatTable.GamePlayer == player &&
                 (skatTable.GamePlayer.Game.Type == GameType.Null ||
-                skatTable.GamePlayer.Game.Type == GameType.Grand);
+                 !skatTable.SkatTaken);
+
+            checkBoxHand.IsEnabled =
+                !skatTable.GameStarted &&
+                !skatTable.SkatTaken &&
+                skatTable.GamePlayer == player &&
+                (checkBoxOuvert.IsChecked == false ||
+                 skatTable.GamePlayer.Game.Type == GameType.Null);
 
             checkBoxSchneider.IsEnabled =
                 checkBoxHand.IsEnabled &&
                 skatTable.GamePlayer.Game.Type != GameType.Null &&
-                skatTable.GamePlayer.Game.Type != GameType.Null &&
-                checkBoxHand.IsChecked == true;
+                checkBoxHand.IsChecked == true &&
+                checkBoxOuvert.IsChecked == false;
 
-            checkBoxSchwarz.IsEnabled = checkBoxSchneider.IsEnabled && checkBoxSchneider.IsChecked == true;
+            checkBoxSchwarz.IsEnabled = checkBoxSchneider.IsEnabled &&
+                checkBoxSchneider.IsChecked == true;
 
             if (skatTable.GameStarted && skatTable.GamePlayer != null && skatTable.GamePlayer.Cards.Count == 0 && skatTable.Stich.Count == 0)
             {
@@ -308,6 +318,13 @@ namespace MynaSkat
             {
                 buttonNewGame.Visibility = Visibility.Hidden;
             }
+
+            checkBoxLastStich.IsEnabled =
+                skatTable.GameStarted &&
+                skatTable.LetzterStich.Count > 0 &&
+                player == skatTable.CurrentPlayer &&
+                player.Cards.Count > 0;
+            checkBoxLastStich.Visibility = checkBoxLastStich.IsEnabled ? Visibility.Visible : Visibility.Hidden;
         }
 
         private void UpdatePlayerCards(Player player)
@@ -409,13 +426,13 @@ namespace MynaSkat
             if (game != null)
             {
                 game.Option = GameOption.None;
-                if (checkBoxHand.IsChecked == true)
-                {
-                    game.Option |= GameOption.Hand;
-                }
                 if (checkBoxOuvert.IsChecked == true)
                 {
                     game.Option |= GameOption.Ouvert;
+                }
+                if (checkBoxHand.IsChecked == true)
+                {
+                    game.Option |= GameOption.Hand;
                 }
                 if (checkBoxSchneider.IsChecked == true)
                 {
@@ -443,6 +460,44 @@ namespace MynaSkat
             return -1;
         }
 
+        private void UpdateOuvertCards(Player player)
+        {
+            foreach (var img in imageOuvert)
+            {
+                img.Source = null;
+            }
+            if (skatTable.GameStarted && skatTable.GamePlayer.Game.Option.HasFlag(GameOption.Ouvert) &&
+                player != skatTable.GamePlayer)
+            {
+                int idx = 0;
+                foreach (var card in skatTable.GamePlayer.Cards)
+                {
+                    imageOuvert[idx++].Source = bitmapCache[card.InternalNumber];
+                }
+            }
+        }
+
+        private void UpdateLastStichCards(Player player)
+        {
+            var show =
+                skatTable.GameStarted &&
+                skatTable.LetzterStich.Count > 0 &&
+                player.Cards.Count > 0 &&
+                player == skatTable.CurrentPlayer;
+            foreach (var img in imageLastStich)
+            {
+                img.Source =  show ? bitmapBack : null;
+            }
+            if (show && checkBoxLastStich.IsChecked == true)
+            {
+                int idx = 0;
+                foreach (var card in skatTable.LetzterStich)
+                {
+                    imageLastStich[idx++].Source = bitmapCache[card.InternalNumber];
+                }
+            }
+        }
+
         // callbacks
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -454,6 +509,7 @@ namespace MynaSkat
         {
             var player = GetPlayer();
             if (init || player == null) return;
+            checkBoxLastStich.IsChecked = false;
             UpdateStatus();
         }
 
@@ -465,6 +521,7 @@ namespace MynaSkat
             checkBoxHand.IsChecked = false;
             checkBoxSchneider.IsChecked = false;
             checkBoxSchwarz.IsChecked = false;
+            checkBoxLastStich.IsChecked = false;
             var game = GetSelectedGame();
             if (game != null)
             {
@@ -477,16 +534,37 @@ namespace MynaSkat
         {
             var player = GetPlayer();
             if (init || player == null) return;
-            if (checkBoxHand.IsChecked == false)
+            bool isNull = player.Game?.Type == GameType.Null;
+            if (!isNull)
             {
-                checkBoxSchneider.IsChecked = false;
-                checkBoxSchwarz.IsChecked = false;
+                if (sender == checkBoxOuvert)
+                {
+                    checkBoxHand.IsChecked = checkBoxOuvert.IsChecked;
+                    checkBoxSchneider.IsChecked = checkBoxOuvert.IsChecked;
+                    checkBoxSchwarz.IsChecked = checkBoxOuvert.IsChecked;
+                }
+                if (checkBoxHand.IsChecked == false)
+                {
+                    checkBoxSchneider.IsChecked = false;
+                }
+                if (checkBoxSchneider.IsChecked == false)
+                {
+                    checkBoxSchwarz.IsChecked = false;
+                }
             }
             var game = GetSelectedGame();
             if (game != null)
             {
                 player.Game = game;
             }
+            checkBoxLastStich.IsChecked = false;
+            UpdateStatus();
+        }
+
+        private void CheckBoxLastStich_Click(object sender, RoutedEventArgs e)
+        {
+            var player = GetPlayer();
+            if (init || player == null) return;
             UpdateStatus();
         }
 
@@ -500,6 +578,7 @@ namespace MynaSkat
             imageSkat0.Source = bitmapBack;
             imageSkat1.Source = bitmapBack;
             SelectActivePlayer();
+            checkBoxLastStich.IsChecked = false;
             UpdateStatus();
         }
 
@@ -523,7 +602,7 @@ namespace MynaSkat
                 skat = skatTable.Skat;
             }
             var spitzen = player.Game.GetSpitzen(player.Cards, skat);
-            var reizvalue = player.Game.GetReizValue(spitzen);
+            var reizvalue = player.Game.GetReizWert(spitzen);
             if (reizvalue < skatTable.CurrentReizValue)
             {
                 if (MessageBox.Show($"Der Reizwert für das Spiel {skatTable.GamePlayer.Game} ist {reizvalue}. Du hast aber bis {skatTable.CurrentReizValue} gereizt. Willst Du trotzdem spielen?",
@@ -542,6 +621,7 @@ namespace MynaSkat
             // spitzen mit skat
             skatTable.Spitzen = player.Game.GetSpitzen(player.Cards, skat);
             SelectActivePlayer();
+            checkBoxLastStich.IsChecked = false;
             UpdateStatus();
         }
 
@@ -583,6 +663,11 @@ namespace MynaSkat
                     else if (isNo)
                     {
                         checkBoxHand.IsChecked = false;
+                        if (checkBoxOuvert.IsChecked == true &&
+                            skatTable.GamePlayer.Game.Type != GameType.Null)
+                        {
+                            checkBoxOuvert.IsChecked = false;
+                        }
                         CheckBoxOption_Click(null, null);
                     }
                 }
@@ -671,6 +756,7 @@ namespace MynaSkat
         {
             var player = GetPlayer();
             if (init || player == null) return;
+            checkBoxLastStich.IsChecked = false;
             var image = sender as Image;
             // druecken
             if (skatTable.GamePlayer == player && skatTable.SkatTaken && !skatTable.GameStarted)
@@ -737,8 +823,11 @@ namespace MynaSkat
         {
             var player = GetPlayer();
             if (init || player == null) return;
+            checkBoxLastStich.IsChecked = false;
             if (skatTable.GameStarted && skatTable.CurrentPlayer == player && skatTable.Stich.Count >= 3)
             {
+                skatTable.LetzterStich.Clear();
+                skatTable.LetzterStich.AddRange(skatTable.Stich);
                 skatTable.Stich.Clear();
             }
             if (player.Cards.Count == 0)

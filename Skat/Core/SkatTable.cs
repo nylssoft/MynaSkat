@@ -15,6 +15,8 @@ namespace MynaSkat.Core
 
         public List<Card> Stich { get; set; } = new List<Card>();
 
+        public List<Card> LetzterStich { get; set; } = new List<Card>();
+
         public Player GamePlayer { get; set; } = null;
 
         public bool GameStarted { get; set; } = false;
@@ -132,6 +134,7 @@ namespace MynaSkat.Core
             CurrentPlayer = null;
             Stich.Clear();
             Skat.Clear();
+            LetzterStich.Clear();
             using (var rng = new RNGCryptoServiceProvider())
             {
                 var deck = Card.GenerateDeck();

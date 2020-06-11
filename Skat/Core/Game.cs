@@ -38,23 +38,23 @@ namespace MynaSkat.Core
             if (Type == GameType.Grand || Type == GameType.Color)
             {
                 text = Type == GameType.Grand ? "Grand" : Color.ToString();
-                if (Option.HasFlag(GameOption.Hand))
-                {
-                    text += " Hand";
-                }
                 if (Option.HasFlag(GameOption.Ouvert))
                 {
                     text += " Ouvert"; // schneider schwarz angesagt
                 }
                 else
                 {
+                    if (Option.HasFlag(GameOption.Hand))
+                    {
+                        text += " Hand";
+                    }
                     if (schneider)
                     {
                         text += " Schneider";
                     }
                     if (Option.HasFlag(GameOption.Schneider))
                     {
-                        text += " Schneider angesagt";
+                        text += " Schneider Angesagt";
                     }
                     if (schwarz)
                     {
@@ -62,7 +62,7 @@ namespace MynaSkat.Core
                     }
                     if (Option.HasFlag(GameOption.Schwarz))
                     {
-                        text += " Schwarz angesagt";
+                        text += " Schwarz Angesagt";
                     }
                 }
             }
@@ -136,11 +136,11 @@ namespace MynaSkat.Core
             return augen >= 61;
         }
 
-        public Spielwert GetSpielWert(Spitzen spitzen, List<Card> stichList, List<Card> skat, int reizValue)
+        public Spielwert GetSpielWert(Spitzen spitzen, List<Card> stichList, List<Card> skat, int reizWert)
         {
             var spielwert = new Spielwert();
-            var gameReizValue = GetReizValue(spitzen);
-            if (gameReizValue < reizValue)
+            var gameReizValue = GetReizWert(spitzen);
+            if (gameReizValue < reizWert)
             {
                 int wert;
                 if (Type == GameType.Null)
@@ -153,7 +153,7 @@ namespace MynaSkat.Core
                 }
                 spielwert.Punkte = wert;
                 int mult = 1;
-                while (spielwert.Punkte < reizValue)
+                while (spielwert.Punkte < reizWert)
                 {
                     spielwert.Punkte += wert;
                     mult++;
@@ -171,7 +171,7 @@ namespace MynaSkat.Core
                 spielwert.Ueberreizt = true;
                 spielwert.Gewonnen = false;
                 spielwert.Punkte *= -2;
-                spielwert.Beschreibung = $"Überreizt mit {reizValue}! Verloren! {spiel} : {calc} x -2 = {spielwert.Punkte}.";
+                spielwert.Beschreibung = $"Überreizt mit {reizWert}! Verloren! {spiel} : {calc} x -2 = {spielwert.Punkte}.";
             }
             else
             {
@@ -253,7 +253,7 @@ namespace MynaSkat.Core
             return spielwert;
         }
 
-        public int GetReizValue(Spitzen spitzen)
+        public int GetReizWert(Spitzen spitzen)
         {
             if (Type == GameType.Null)
             {
