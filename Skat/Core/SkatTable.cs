@@ -248,5 +248,77 @@ namespace MynaSkat.Core
         {
             return card1.GetOrderNumber(game) > card2.GetOrderNumber(game);
         }
+
+        public bool CanGiveUp(Player player)
+        {
+            return GameStarted &&
+                player == GamePlayer &&
+                player == CurrentPlayer &&
+                player.Cards.Count >= 9;
+        }
+
+        public void GiveUp()
+        {
+            // add all cards on the game player's hand to the stitch of one opponent player
+            Player opponentPlayer = null;
+            foreach (var p in Players)
+            {
+                if (p != GamePlayer && opponentPlayer == null)
+                {
+                    opponentPlayer = p;
+                    p.Stiche.AddRange(GamePlayer.Cards);
+                    p.Stiche.AddRange(GamePlayer.Stiche);
+                    p.Stiche.AddRange(p.Cards);
+                    p.Stiche.AddRange(Skat);
+                    p.Stiche.AddRange(Stich);
+                    p.Cards.Clear();
+                    GamePlayer.Cards.Clear();
+                    GamePlayer.Stiche.Clear();
+                    Skat.Clear();
+                    Stich.Clear();
+                }
+                else if (p != GamePlayer && opponentPlayer != null)
+                {
+                    opponentPlayer.Stiche.AddRange(p.Cards);
+                    p.Cards.Clear();
+                }
+            }
+            var game = GamePlayer.Game;
+            Spielwert = game.GetSpielWert(Spitzen, GamePlayer.Stiche, Skat, CurrentReizValue);
+            GamePlayer.Score += Spielwert.Punkte;
+            Spiele += 1;
+        }
+
+        public bool CanViewLastStitch(Player player)
+        {
+            return GameStarted &&
+                LetzterStich.Count > 0 &&
+                player == CurrentPlayer &&
+                player.Cards.Count > 0;
+        }
+
+        public bool CanSetOuvert(Player player)
+        {
+            return !GameStarted && GamePlayer == player && (GamePlayer.Game.Type == GameType.Null || !SkatTaken);
+        }
+
+        public bool CanSetHand(Player player)
+        {
+            return !GameStarted && !SkatTaken && GamePlayer == player && (!GamePlayer.Game.Option.HasFlag(GameOption.Ouvert) || GamePlayer.Game.Type == GameType.Null);
+        }
+
+        public bool CanSetSchneider(Player player)
+        {
+            return CanSetHand(player) &&
+                   GamePlayer.Game.Type != GameType.Null &&
+                   GamePlayer.Game.Option.HasFlag(GameOption.Hand) &&
+                   !GamePlayer.Game.Option.HasFlag(GameOption.Ouvert);
+        }
+
+        public bool CanSetSchwarz(Player player)
+        {
+            return CanSetSchneider(player) &&
+                   GamePlayer.Game.Option.HasFlag(GameOption.Schneider);
+        }
     }
 }

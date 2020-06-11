@@ -156,6 +156,7 @@
             <CheckBox x:Name="checkBoxSchneider" Content="Schneider" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>
             <CheckBox x:Name="checkBoxSchwarz" Content="Schwarz" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>
             <CheckBox x:Name="checkBoxComputer" Content="Computer Gegner" VerticalAlignment="Center" Margin="100,0,0,0"/>
+            <Button x:Name="buttonGiveUp" Content="Aufgeben" Width="120" Height="35" Margin="20,0,0,0" Click="ButtonGiveUp_Click"/>
         </StackPanel>
     </Grid>
 </Window>
