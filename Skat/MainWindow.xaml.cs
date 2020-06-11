@@ -808,7 +808,8 @@ namespace MynaSkat
                 }
                 if (cntPassen == 3)
                 {
-                    CreateNewTable();
+                    skatTable.Spiele += 1;
+                    skatTable.StartNewRound();
                 }
                 else if (gamePlayer != null && cntPassen == 2)
                 {
