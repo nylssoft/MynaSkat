@@ -9,6 +9,8 @@ namespace MynaSkat.Core
 {
     public class SkatTable
     {
+        public int Spiele { get; set; } = 0;
+
         public List<Player> Players { get; set; } = new List<Player>();
 
         public List<Card> Skat { get; set; } = new List<Card>();
@@ -241,7 +243,6 @@ namespace MynaSkat.Core
             }
             return false;
         }
-
 
         public bool IsCardGreater(Game game, Card card1, Card card2)
         {

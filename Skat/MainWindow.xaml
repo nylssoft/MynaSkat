@@ -85,7 +85,7 @@
                 <Image x:Name="imageOuvert9" Source="Images/Back.gif" Margin="0,0,50,0"/>
             </StackPanel>
         </Grid>
-        <Grid Grid.Row="1" HorizontalAlignment="Right">
+        <Grid x:Name="gridLastStich" Grid.Row="1" HorizontalAlignment="Right">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="140" />
                 <ColumnDefinition Width="100" />
@@ -116,7 +116,7 @@
             <Image x:Name="imageSkat0" Grid.Column="0" Height="140" Width="90" MouseDown="Image_MouseDown"/>
             <Image x:Name="imageSkat1" Grid.Column="1" Height="140" Width="90" MouseDown="Image_MouseDown"/>
         </Grid>
-        <Grid Grid.Row="2" Margin="10,0,0,0">
+        <Grid x:Name="gridPlayCards" Grid.Row="2" Margin="10,0,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="100" />
                 <ColumnDefinition Width="100" />
@@ -155,6 +155,7 @@
             <CheckBox x:Name="checkBoxHand" Content="Hand" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>
             <CheckBox x:Name="checkBoxSchneider" Content="Schneider" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>
             <CheckBox x:Name="checkBoxSchwarz" Content="Schwarz" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>
+            <CheckBox x:Name="checkBoxComputer" Content="Computer Gegner" VerticalAlignment="Center" Margin="100,0,0,0"/>
         </StackPanel>
     </Grid>
 </Window>

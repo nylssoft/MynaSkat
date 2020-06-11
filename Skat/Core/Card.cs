@@ -125,7 +125,7 @@ namespace MynaSkat.Core
             return augen;
         }
 
-        private static Card DrawOne(RNGCryptoServiceProvider rng, List<Card> deck)
+        public static Card DrawOne(RNGCryptoServiceProvider rng, List<Card> deck)
         {
             var nr = Next(rng, deck.Count);
             var card = deck[nr];

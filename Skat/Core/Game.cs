@@ -125,7 +125,7 @@ namespace MynaSkat.Core
             if (Option.HasFlag(GameOption.Ouvert) ||
                 Option.HasFlag(GameOption.Schwarz))
             {
-                return stichList.Count == 10; // alle stiche bekommen, gegner keiner stich
+                return stichList.Count == 30; // alle stiche bekommen, gegner keinen stich
             }
             // punkte über alle stiche und skat
             var augen = Card.GetAugen(stichList, skat);
@@ -196,7 +196,7 @@ namespace MynaSkat.Core
                     mult = spitzen.Spielt;
                     var augen = Card.GetAugen(stichList, skat);
                     bool schneider = augen >= 90;
-                    bool schwarz = stichList.Count == 10;
+                    bool schwarz = stichList.Count == 30;
                     if (Option.HasFlag(GameOption.Hand))
                     {
                         mult++;

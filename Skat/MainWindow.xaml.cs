@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -14,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace MynaSkat
 {
@@ -33,6 +35,8 @@ namespace MynaSkat
         private Image[] imageStich;
         private Image[] imageOuvert;
         private Image[] imageLastStich;
+
+        private DateTime lastCardPlayed = DateTime.Now;
 
         public MainWindow()
         {
@@ -272,7 +276,18 @@ namespace MynaSkat
                 {
                     textBlockStatus[idx].Text += " Hat gegeben.";
                 }
-                textBlockGame[idx].Text += $"{player.Score} Punkte.";
+                if (skatTable.Spiele > 0)
+                {
+                    textBlockGame[idx].Text += $"{player.Score} Punkte.";
+                    if (skatTable.Spiele > 1)
+                    {
+                        textBlockGame[idx].Text += $" {skatTable.Spiele} Spiele.";
+                    }
+                    else
+                    {
+                        textBlockGame[idx].Text += $" {skatTable.Spiele} Spiel.";
+                    }
+                }
                 idx++;
             }
         }
@@ -325,6 +340,24 @@ namespace MynaSkat
                 player == skatTable.CurrentPlayer &&
                 player.Cards.Count > 0;
             checkBoxLastStich.Visibility = checkBoxLastStich.IsEnabled ? Visibility.Visible : Visibility.Hidden;
+
+            checkBoxComputer.IsEnabled =
+                !skatTable.GameStarted ||
+                player == skatTable.CurrentPlayer && player == skatTable.GamePlayer;
+
+            if (checkBoxComputer.IsChecked == true &&
+                skatTable.GameStarted &&
+                player == skatTable.CurrentPlayer &&
+                player != skatTable.GamePlayer)
+            {
+                gridPlayCards.Visibility = Visibility.Hidden;
+                gridLastStich.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                gridPlayCards.Visibility = Visibility.Visible;
+                gridLastStich.Visibility = Visibility.Visible;
+            }
         }
 
         private void UpdatePlayerCards(Player player)
@@ -503,6 +536,49 @@ namespace MynaSkat
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             CreateNewTable();
+            var timer = new DispatcherTimer
+            {
+                Interval = new TimeSpan(0, 0, 1)
+            };
+            timer.Tick += Timer_Tick;
+            timer.Start();
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            if (checkBoxComputer.IsChecked == false ||
+                (DateTime.Now - lastCardPlayed).TotalSeconds < 5)
+            {
+                return;
+            }
+            var player = GetPlayer();
+            if (skatTable.GameStarted && player == skatTable.CurrentPlayer && player != skatTable.GamePlayer &&
+                player.Cards.Count > 0)
+            {
+                var deck = new List<Card>();
+                deck.AddRange(player.Cards);
+                using (var prng = new RNGCryptoServiceProvider())
+                {
+                    while (deck.Count > 0)
+                    {
+                        var card = Card.DrawOne(prng, deck);
+                        if (skatTable.IsValidForStich(card))
+                        {
+                            int idx = 0;
+                            foreach (var c in player.Cards)
+                            {
+                                if (card == c)
+                                {
+                                    Image_MouseDown(imageCard[idx], null);
+                                    break;
+                                }
+                                idx++;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         private void RadioButtonPlayer_Click(object sender, RoutedEventArgs e)
@@ -757,6 +833,7 @@ namespace MynaSkat
             var player = GetPlayer();
             if (init || player == null) return;
             checkBoxLastStich.IsChecked = false;
+            lastCardPlayed = DateTime.Now;
             var image = sender as Image;
             // druecken
             if (skatTable.GamePlayer == player && skatTable.SkatTaken && !skatTable.GameStarted)
@@ -835,6 +912,7 @@ namespace MynaSkat
                 var game = skatTable.GamePlayer.Game;
                 skatTable.Spielwert = game.GetSpielWert(skatTable.Spitzen, skatTable.GamePlayer.Stiche, skatTable.Skat, skatTable.CurrentReizValue);
                 skatTable.GamePlayer.Score += skatTable.Spielwert.Punkte;
+                skatTable.Spiele += 1;
             }
             UpdateStatus();
         }
