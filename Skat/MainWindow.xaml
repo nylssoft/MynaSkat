@@ -55,20 +55,20 @@
             </Grid.ColumnDefinitions>
             <RadioButton GroupName="player" Margin="0,0,60,0" Grid.Row="0" Grid.Column="0" x:Name="radioButtonPlayer1" Content="Player 1" VerticalAlignment="Center" Click="RadioButtonPlayer_Click"/>
             <TextBlock Margin="0,0,5,0" Grid.Row="0" Grid.Column="1" x:Name="textBlockStatus1" Text="Status1" VerticalAlignment="Center"/>
-            <Button Grid.Row="0" Grid.Column="3" x:Name="buttonReizenYes1" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonReizen_Click"/>
-            <Button Grid.Row="0" Grid.Column="4" x:Name="buttonReizenNo1" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonReizen_Click"/>
+            <Button Grid.Row="0" Grid.Column="3" x:Name="buttonPlayer1Action1" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonAction_Click"/>
+            <Button Grid.Row="0" Grid.Column="4" x:Name="buttonPlayer1Action2" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonAction_Click"/>
             <TextBlock Foreground="Aqua" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5" x:Name="textBlockGame1" VerticalAlignment="Center" />
 
             <RadioButton GroupName="player" Margin="0,0,60,0" Grid.Row="2" Grid.Column="0" x:Name="radioButtonPlayer2" Content="Player 2" VerticalAlignment="Center" Click="RadioButtonPlayer_Click"/>
             <TextBlock Margin="0,0,5,0" Grid.Row="2" Grid.Column="1" x:Name="textBlockStatus2" Text="Status1" VerticalAlignment="Center"/>
-            <Button Grid.Row="2" Grid.Column="3" x:Name="buttonReizenYes2" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonReizen_Click"/>
-            <Button Grid.Row="2" Grid.Column="4" x:Name="buttonReizenNo2" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonReizen_Click"/>
+            <Button Grid.Row="2" Grid.Column="3" x:Name="buttonPlayer2Action1" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonAction_Click"/>
+            <Button Grid.Row="2" Grid.Column="4" x:Name="buttonPlayer2Action2" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonAction_Click"/>
             <TextBlock Foreground="Aqua" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="5" x:Name="textBlockGame2" VerticalAlignment="Center" />
             
             <RadioButton GroupName="player" Margin="0,0,60,0" Grid.Row="4" Grid.Column="0" x:Name="radioButtonPlayer3" Content="Player 3" VerticalAlignment="Center" Click="RadioButtonPlayer_Click"/>
             <TextBlock Margin="0,0,5,0" Grid.Row="4" Grid.Column="1" x:Name="textBlockStatus3" Text="Status1" VerticalAlignment="Center"/>
-            <Button Grid.Row="4" Grid.Column="3" x:Name="buttonReizenYes3" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonReizen_Click"/>
-            <Button Grid.Row="4" Grid.Column="4" x:Name="buttonReizenNo3" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonReizen_Click"/>
+            <Button Grid.Row="4" Grid.Column="3" x:Name="buttonPlayer3Action1" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonAction_Click"/>
+            <Button Grid.Row="4" Grid.Column="4" x:Name="buttonPlayer3Action2" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonAction_Click"/>
             <TextBlock Foreground="Aqua" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="5" x:Name="textBlockGame3" VerticalAlignment="Center" />
 
             <StackPanel Height="100" x:Name="stackPanelOuvert" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="6"
@@ -145,12 +145,12 @@
             <Image x:Name="imageCard11" Grid.Column="11" Height="140" Width="90" MouseDown="Image_MouseDown"/>
         </Grid>
         <StackPanel Grid.Row="3" Orientation="Horizontal">
-            <RadioButton GroupName="Game" x:Name="radionButtonGrand" Content="Grand" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
-            <RadioButton GroupName="Game" x:Name="radionButtonNull" Content="Null" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click" />
-            <RadioButton GroupName="Game" x:Name="radionButtonKreuz" Content="Kreuz" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
-            <RadioButton GroupName="Game" x:Name="radionButtonPik" Content="Pik" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
-            <RadioButton GroupName="Game" x:Name="radionButtonHerz" Content="Herz" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
-            <RadioButton GroupName="Game" x:Name="radionButtonKaro" Content="Karo" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
+            <RadioButton GroupName="Game" x:Name="radioButtonGrand" Content="Grand" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
+            <RadioButton GroupName="Game" x:Name="radioButtonNull" Content="Null" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click" />
+            <RadioButton GroupName="Game" x:Name="radioButtonKreuz" Content="Kreuz" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
+            <RadioButton GroupName="Game" x:Name="radioButtonPik" Content="Pik" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
+            <RadioButton GroupName="Game" x:Name="radioButtonHerz" Content="Herz" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
+            <RadioButton GroupName="Game" x:Name="radioButtonKaro" Content="Karo" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
             <CheckBox x:Name="checkBoxOuvert" Content="Ouvert" VerticalAlignment="Center" Margin="100,0,5,0" Click="CheckBoxOption_Click"/>
             <CheckBox x:Name="checkBoxHand" Content="Hand" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>
             <CheckBox x:Name="checkBoxSchneider" Content="Schneider" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>

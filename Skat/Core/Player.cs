@@ -43,6 +43,11 @@ namespace MynaSkat.Core
 
         public int Score { get; set; }
 
+        public void SortCards()
+        {
+            Cards.Sort((b, a) => a.GetOrderNumber(Game).CompareTo(b.GetOrderNumber(Game)));
+        }
+
         public override bool Equals(object obj)
         {
             var p = obj as Player;

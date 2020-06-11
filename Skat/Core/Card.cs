@@ -87,11 +87,6 @@ namespace MynaSkat.Core
             return orderNumber;
         }
 
-        public static void Sort(List<Card> cards, Game game)
-        {
-            cards.Sort((b, a) => a.GetOrderNumber(game).CompareTo(b.GetOrderNumber(game)));
-        }
-
         public int Augen
         {
             get

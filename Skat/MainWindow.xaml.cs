@@ -1,20 +1,12 @@
 ﻿using MynaSkat.Core;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace MynaSkat
@@ -28,8 +20,8 @@ namespace MynaSkat
         private RadioButton[] radioButtonPlayer;
         private TextBlock[] textBlockStatus;
         private TextBlock[] textBlockGame;
-        private Button[] buttonReizenYes;
-        private Button[] buttonReizenNo;
+        private Button[] buttonAction1;
+        private Button[] buttonAction2;
         private Image[] imageSkat;
         private Image[] imageCard;
         private Image[] imageStich;
@@ -44,8 +36,8 @@ namespace MynaSkat
             radioButtonPlayer = new RadioButton[] { radioButtonPlayer1, radioButtonPlayer2, radioButtonPlayer3 };
             textBlockStatus = new TextBlock[] { textBlockStatus1, textBlockStatus2, textBlockStatus3 };
             textBlockGame = new TextBlock[] { textBlockGame1, textBlockGame2, textBlockGame3 };
-            buttonReizenYes = new Button[] { buttonReizenYes1, buttonReizenYes2, buttonReizenYes3 };
-            buttonReizenNo = new Button[] { buttonReizenNo1, buttonReizenNo2, buttonReizenNo3 };
+            buttonAction1 = new Button[] { buttonPlayer1Action1, buttonPlayer2Action1, buttonPlayer3Action1 };
+            buttonAction2 = new Button[] { buttonPlayer1Action2, buttonPlayer2Action2, buttonPlayer3Action2 };
             imageSkat = new Image[] { imageSkat0, imageSkat1 };
             imageCard = new Image[] { imageCard0, imageCard1, imageCard2, imageCard3, imageCard4, imageCard5,
                 imageCard6, imageCard7, imageCard8, imageCard9, imageCard10, imageCard11};
@@ -77,7 +69,6 @@ namespace MynaSkat
             foreach (var player in skatTable.Players)
             {
                 radioButtonPlayer[idx].Content = player.Name;
-                Card.Sort(player.Cards, player.Game);
                 idx++;
             }
             imageSkat0.Source = bitmapBack;
@@ -89,30 +80,7 @@ namespace MynaSkat
 
         private void SelectActivePlayer()
         {
-            Player activePlayer = null;
-            foreach (var p in skatTable.Players)
-            {
-                if (skatTable.GamePlayer == null)
-                {
-                    if (p.ReizStatus == ReizStatus.Sagen && !skatTable.ReizSaid ||
-                        p.ReizStatus == ReizStatus.Hoeren && skatTable.ReizSaid)
-                    {
-                        activePlayer = p;
-                        break;
-                    }
-                }
-                else
-                {
-                    if (skatTable.CurrentPlayer == null)
-                    {
-                        activePlayer = skatTable.GamePlayer;
-                        break;
-                    }
-                    activePlayer = skatTable.CurrentPlayer;
-                    break;
-                }
-            }
-            var idx = GetPlayerIndex(activePlayer);
+            var idx = GetPlayerIndex(skatTable.GetActivePlayer());
             if (idx >= 0)
             {
                 radioButtonPlayer[idx].IsChecked = true;
@@ -124,168 +92,39 @@ namespace MynaSkat
             var viewPlayer = GetPlayer();
             if (init || viewPlayer == null) return;
             // sort and update cards for viewed player
-            Card.Sort(viewPlayer.Cards, viewPlayer.Game);
+            viewPlayer.SortCards();
             UpdatePlayerCards(viewPlayer);
             UpdateOuvertCards(viewPlayer);
             UpdateLastStichCards(viewPlayer);
             // update game type for viewed player
-            radionButtonGrand.IsChecked = viewPlayer.Game.Type == GameType.Grand;
-            radionButtonNull.IsChecked = viewPlayer.Game.Type == GameType.Null;
-            radionButtonKreuz.IsChecked = viewPlayer.Game.Type == GameType.Color && viewPlayer.Game.Color == CardColor.Kreuz;
-            radionButtonPik.IsChecked = viewPlayer.Game.Type == GameType.Color && viewPlayer.Game.Color == CardColor.Pik;
-            radionButtonHerz.IsChecked = viewPlayer.Game.Type == GameType.Color && viewPlayer.Game.Color == CardColor.Herz;
-            radionButtonKaro.IsChecked = viewPlayer.Game.Type == GameType.Color && viewPlayer.Game.Color == CardColor.Karo;
+            radioButtonGrand.IsChecked = viewPlayer.Game.Type == GameType.Grand;
+            radioButtonNull.IsChecked = viewPlayer.Game.Type == GameType.Null;
+            radioButtonKreuz.IsChecked = viewPlayer.Game.Type == GameType.Color && viewPlayer.Game.Color == CardColor.Kreuz;
+            radioButtonPik.IsChecked = viewPlayer.Game.Type == GameType.Color && viewPlayer.Game.Color == CardColor.Pik;
+            radioButtonHerz.IsChecked = viewPlayer.Game.Type == GameType.Color && viewPlayer.Game.Color == CardColor.Herz;
+            radioButtonKaro.IsChecked = viewPlayer.Game.Type == GameType.Color && viewPlayer.Game.Color == CardColor.Karo;
             // update game type for viewed player
             checkBoxOuvert.IsChecked = viewPlayer.Game.Option.HasFlag(GameOption.Ouvert);
             checkBoxHand.IsChecked = viewPlayer.Game.Option.HasFlag(GameOption.Hand);
             checkBoxSchneider.IsChecked = viewPlayer.Game.Option.HasFlag(GameOption.Schneider);
             checkBoxSchwarz.IsChecked = viewPlayer.Game.Option.HasFlag(GameOption.Schwarz);
-            // update status and reiz buttons for all players
+            // update status and actions buttons for all players
             int idx = 0;
             foreach (var player in skatTable.Players)
             {
-                textBlockStatus[idx].Text = "";
-                textBlockGame[idx].Text = "";
-                buttonReizenYes[idx].Visibility = Visibility.Hidden;
-                buttonReizenNo[idx].Visibility = Visibility.Hidden;
-                if (skatTable.GamePlayer == null)
+                buttonAction1[idx].Visibility = Visibility.Hidden;
+                buttonAction2[idx].Visibility = Visibility.Hidden;
+                var playerStatus = skatTable.GetPlayerStatus(viewPlayer, player);
+                textBlockStatus[idx].Text = playerStatus.Status;
+                textBlockGame[idx].Text = playerStatus.Game;
+                if (playerStatus.Actions.Any())
                 {
-                    if (player.ReizStatus == ReizStatus.Warten)
+                    buttonAction1[idx].Content = playerStatus.Actions[0];
+                    buttonAction1[idx].Visibility = Visibility.Visible;
+                    if (playerStatus.Actions.Count > 1)
                     {
-                        textBlockStatus[idx].Text = "Wartet.";
-                    }
-                    else if (player.ReizStatus == ReizStatus.Hoeren && !skatTable.ReizSaid)
-                    {
-                        textBlockStatus[idx].Text = "Hört auf Reizansage.";
-                        if (skatTable.CurrentReizValue > 0)
-                        {
-                            textBlockStatus[idx].Text += $" {skatTable.CurrentReizValue} angesagt.";
-                        }
-                    }
-                    else if (player.ReizStatus == ReizStatus.Hoeren && skatTable.ReizSaid)
-                    {
-                        textBlockStatus[idx].Text = "Antworten!";
-                        if (viewPlayer == player)
-                        {
-                            buttonReizenYes[idx].Content = $"{skatTable.CurrentReizValue} halten";
-                            buttonReizenYes[idx].Visibility = Visibility.Visible;
-                            buttonReizenNo[idx].Content = "Weg";
-                            buttonReizenNo[idx].Visibility = Visibility.Visible;
-                        }
-                    }
-                    else if (player.ReizStatus == ReizStatus.Sagen && !skatTable.ReizSaid)
-                    {
-                        textBlockStatus[idx].Text = "Reizen!";
-                        if (viewPlayer == player)
-                        {
-                            buttonReizenYes[idx].Content = $"{skatTable.NextReizValue} sagen";
-                            buttonReizenYes[idx].Visibility = Visibility.Visible;
-                            buttonReizenNo[idx].Content = "Weg";
-                            buttonReizenNo[idx].Visibility = Visibility.Visible;
-                        }
-                    }
-                    else if (player.ReizStatus == ReizStatus.Sagen && skatTable.ReizSaid)
-                    {
-                        textBlockStatus[idx].Text = $"Wartet auf Antwort. {skatTable.CurrentReizValue} gesagt.";
-                    }
-                    else if (player.ReizStatus == ReizStatus.Passen)
-                    {
-                        textBlockStatus[idx].Text = "Weg.";
-                    }
-                }
-                else if (!skatTable.GameStarted)
-                {
-                    textBlockStatus[idx].Text = $"Wartet auf Spielansage von {skatTable.GamePlayer.Name}.";
-                    if (player == skatTable.GamePlayer)
-                    {
-                        if (skatTable.Skat.Count < 2)
-                        {
-                            textBlockStatus[idx].Text = $"Drücken!";
-                        }
-                        else if (!skatTable.SkatTaken && checkBoxHand.IsChecked == false)
-                        {
-                            textBlockStatus[idx].Text = $"Skat nehmen oder Hand ansagen!";
-                            if (viewPlayer == player)
-                            {
-                                buttonReizenYes[idx].Content = $"Skat nehmen";
-                                buttonReizenYes[idx].Visibility = Visibility.Visible;
-                                buttonReizenNo[idx].Content = "Hand spielen";
-                                buttonReizenNo[idx].Visibility = Visibility.Visible;
-                                textBlockGame[idx].Text += $"Du wirst {viewPlayer.Game.GetGameText()} spielen. ";
-                            }
-                        }
-                        else
-                        {
-                            textBlockStatus[idx].Text = $"Spiel ansagen oder drücken!";
-                            if (viewPlayer == player)
-                            {
-                                buttonReizenYes[idx].Content = $"Los geht's!";
-                                buttonReizenYes[idx].Visibility = Visibility.Visible;
-                                if (player.Game.Option.HasFlag(GameOption.Hand))
-                                {
-                                    buttonReizenNo[idx].Content = $"Kein Handspiel!";
-                                    buttonReizenNo[idx].Visibility = Visibility.Visible;
-                                }
-                                textBlockGame[idx].Text += $"Du wirst {viewPlayer.Game.GetGameText()} spielen. ";
-                            }
-                        }
-                        textBlockStatus[idx].Text += $" Du hast {skatTable.CurrentReizValue} angesagt.";
-                    }
-                }
-                else
-                {
-                    if (player.Cards.Count == 0 && skatTable.Stich.Count == 0)
-                    {
-                        textBlockStatus[idx].Text = "Spiel beendet.";
-                        List<Card> skat = null;
-                        if (player == skatTable.GamePlayer && player.Game.Type != GameType.Null)
-                        {
-                            skat = skatTable.Skat;
-                        }
-                        textBlockGame[idx].Text += $"{Card.GetAugen(player.Stiche, skat)} Augen. ";
-                        if (player == skatTable.GamePlayer)
-                        {
-                            textBlockGame[idx].Text += $"{skatTable.Spielwert.Beschreibung} ";
-                        }
-                    }
-                    else
-                    {
-                        if (player == skatTable.CurrentPlayer)
-                        {
-                            if (skatTable.Stich.Count == 3)
-                            {
-                                textBlockStatus[idx].Text = "Stich einsammeln!";
-                            }
-                            else
-                            {
-                                textBlockStatus[idx].Text = "Ausspielen!";
-                            }
-                        }
-                        else
-                        {
-                            textBlockStatus[idx].Text = $"Wartet auf {skatTable.CurrentPlayer.Name}. ";
-                        }
-                        if (player == skatTable.GamePlayer)
-                        {
-                            textBlockGame[idx].Text += $"Spielt {viewPlayer.Game.GetGameText()}. ";
-                            textBlockGame[idx].Text += $"Hat {skatTable.CurrentReizValue} gesagt. ";
-                        }
-                    }
-                }
-                if (player.Position == PlayerPosition.Geben)
-                {
-                    textBlockStatus[idx].Text += " Hat gegeben.";
-                }
-                if (skatTable.Spiele > 0)
-                {
-                    textBlockGame[idx].Text += $"{player.Score} Punkte.";
-                    if (skatTable.Spiele > 1)
-                    {
-                        textBlockGame[idx].Text += $" {skatTable.Spiele} Spiele.";
-                    }
-                    else
-                    {
-                        textBlockGame[idx].Text += $" {skatTable.Spiele} Spiel.";
+                        buttonAction2[idx].Content = playerStatus.Actions[1];
+                        buttonAction2[idx].Visibility = Visibility.Visible;
                     }
                 }
                 idx++;
@@ -296,12 +135,12 @@ namespace MynaSkat
         {
             var player = GetPlayer();
             if (init || player == null) return;
-            radionButtonGrand.IsEnabled = !skatTable.GameStarted;
-            radionButtonNull.IsEnabled = !skatTable.GameStarted;
-            radionButtonKreuz.IsEnabled = !skatTable.GameStarted;
-            radionButtonPik.IsEnabled = !skatTable.GameStarted;
-            radionButtonHerz.IsEnabled = !skatTable.GameStarted;
-            radionButtonKaro.IsEnabled = !skatTable.GameStarted;
+            radioButtonGrand.IsEnabled = !skatTable.GameStarted;
+            radioButtonNull.IsEnabled = !skatTable.GameStarted;
+            radioButtonKreuz.IsEnabled = !skatTable.GameStarted;
+            radioButtonPik.IsEnabled = !skatTable.GameStarted;
+            radioButtonHerz.IsEnabled = !skatTable.GameStarted;
+            radioButtonKaro.IsEnabled = !skatTable.GameStarted;
 
             checkBoxOuvert.IsEnabled = skatTable.CanSetOuvert(player);
             checkBoxHand.IsEnabled = skatTable.CanSetHand(player);
@@ -410,54 +249,20 @@ namespace MynaSkat
             return skatTable.Players[2];
         }
 
-        private Game GetSelectedGame()
+        private GameType GetGameType()
         {
-            Game game = null;
-            if (radionButtonGrand.IsChecked == true)
-            {
-                game = new Game(GameType.Grand);
-            }
-            else if (radionButtonNull.IsChecked == true)
-            {
-                game = new Game(GameType.Null);
-            }
-            else if (radionButtonKreuz.IsChecked == true)
-            {
-                game = new Game(GameType.Color, CardColor.Kreuz);
-            }
-            else if (radionButtonPik.IsChecked == true)
-            {
-                game = new Game(GameType.Color, CardColor.Pik);
-            }
-            else if (radionButtonHerz.IsChecked == true)
-            {
-                game = new Game(GameType.Color, CardColor.Herz);
-            }
-            else if (radionButtonKaro.IsChecked == true)
-            {
-                game = new Game(GameType.Color, CardColor.Karo);
-            }
-            if (game != null)
-            {
-                game.Option = GameOption.None;
-                if (checkBoxOuvert.IsChecked == true)
-                {
-                    game.Option |= GameOption.Ouvert;
-                }
-                if (checkBoxHand.IsChecked == true)
-                {
-                    game.Option |= GameOption.Hand;
-                }
-                if (checkBoxSchneider.IsChecked == true)
-                {
-                    game.Option |= GameOption.Schneider;
-                }
-                if (checkBoxSchwarz.IsChecked == true)
-                {
-                    game.Option |= GameOption.Schwarz;
-                }
-            }
-            return game;
+            if (radioButtonGrand.IsChecked == true) return GameType.Grand;
+            if (radioButtonNull.IsChecked == true) return GameType.Null;
+            return GameType.Color;
+        }
+
+        private CardColor? GetGameColor()
+        {
+            if (radioButtonKreuz.IsChecked == true) return CardColor.Kreuz;
+            if (radioButtonPik.IsChecked == true) return CardColor.Pik;
+            if (radioButtonHerz.IsChecked == true) return CardColor.Herz;
+            if (radioButtonKaro.IsChecked == true) return CardColor.Karo;
+            return null;
         }
 
         private int GetPlayerIndex(Player player)
@@ -510,6 +315,16 @@ namespace MynaSkat
                     imageLastStich[idx++].Source = bitmapCache[card.InternalNumber];
                 }
             }
+        }
+
+        private GameOption GetGameOption()
+        {
+            GameOption ret = GameOption.None;
+            if (checkBoxOuvert.IsChecked == true) ret |= GameOption.Ouvert;
+            if (checkBoxHand.IsChecked == true) ret |= GameOption.Hand;
+            if (checkBoxSchneider.IsChecked == true) ret |= GameOption.Schneider;
+            if (checkBoxSchwarz.IsChecked == true) ret |= GameOption.Schwarz;
+            return ret;
         }
 
         // callbacks
@@ -573,17 +388,16 @@ namespace MynaSkat
         private void RadioButtonGameType_Click(object sender, RoutedEventArgs e)
         {
             var player = GetPlayer();
-            if (init || player == null) return;
+            if (init || player == null || skatTable.GameStarted) return;
             checkBoxOuvert.IsChecked = false;
             checkBoxHand.IsChecked = false;
             checkBoxSchneider.IsChecked = false;
             checkBoxSchwarz.IsChecked = false;
             checkBoxLastStich.IsChecked = false;
-            var game = GetSelectedGame();
-            if (game != null)
+            player.Game = new Game(GetGameType(), GetGameColor())
             {
-                player.Game = game;
-            }
+                Option = GetGameOption()
+            };
             UpdateStatus();
         }
 
@@ -591,30 +405,8 @@ namespace MynaSkat
         {
             var player = GetPlayer();
             if (init || player == null) return;
-            bool isNull = player.Game?.Type == GameType.Null;
-            if (!isNull)
-            {
-                if (sender == checkBoxOuvert)
-                {
-                    checkBoxHand.IsChecked = checkBoxOuvert.IsChecked;
-                    checkBoxSchneider.IsChecked = checkBoxOuvert.IsChecked;
-                    checkBoxSchwarz.IsChecked = checkBoxOuvert.IsChecked;
-                }
-                if (checkBoxHand.IsChecked == false)
-                {
-                    checkBoxSchneider.IsChecked = false;
-                }
-                if (checkBoxSchneider.IsChecked == false)
-                {
-                    checkBoxSchwarz.IsChecked = false;
-                }
-            }
-            var game = GetSelectedGame();
-            if (game != null)
-            {
-                player.Game = game;
-            }
             checkBoxLastStich.IsChecked = false;
+            skatTable.SetGameOption(player, GetGameOption());
             UpdateStatus();
         }
 
@@ -630,7 +422,7 @@ namespace MynaSkat
             skatTable.StartNewRound();
             foreach (var player in skatTable.Players)
             {
-                Card.Sort(player.Cards, player.Game);
+                player.SortCards();
             }
             imageSkat0.Source = bitmapBack;
             imageSkat1.Source = bitmapBack;
@@ -639,50 +431,7 @@ namespace MynaSkat
             UpdateStatus();
         }
 
-        private void Button_TakeSkat(object sender, RoutedEventArgs e)
-        {
-            var player = GetPlayer();
-            if (init || player == null || skatTable.GameStarted || skatTable.SkatTaken ||
-                skatTable.GamePlayer != player) return;
-            skatTable.SkatTaken = true;
-            UpdateStatus();
-        }
-
-        private void Button_StartGame(object sender, RoutedEventArgs e)
-        {
-            var player = GetPlayer();
-            if (init || player != skatTable.GamePlayer ||
-                skatTable.Skat.Count != 2 || skatTable.GameStarted) return;
-            List<Card> skat = null;
-            if (!player.Game.Option.HasFlag(GameOption.Hand))
-            {
-                skat = skatTable.Skat;
-            }
-            var spitzen = player.Game.GetSpitzen(player.Cards, skat);
-            var reizvalue = player.Game.GetReizWert(spitzen);
-            if (reizvalue < skatTable.CurrentReizValue)
-            {
-                if (MessageBox.Show($"Der Reizwert für das Spiel {skatTable.GamePlayer.Game} ist {reizvalue}. Du hast aber bis {skatTable.CurrentReizValue} gereizt. Willst Du trotzdem spielen?",
-                    "Reizen", MessageBoxButton.YesNo) == MessageBoxResult.No)
-                    return;
-            }
-            skatTable.GameStarted = true;
-            foreach (var p in skatTable.Players)
-            {
-                p.Game = player.Game; // same card sort order for everybody
-                if (p.Position == PlayerPosition.Hoeren)
-                {
-                    skatTable.CurrentPlayer = p;
-                }
-            }
-            // spitzen mit skat
-            skatTable.Spitzen = player.Game.GetSpitzen(player.Cards, skat);
-            SelectActivePlayer();
-            checkBoxLastStich.IsChecked = false;
-            UpdateStatus();
-        }
-
-        private void ButtonReizen_Click(object sender, RoutedEventArgs e)
+        private void ButtonAction_Click(object sender, RoutedEventArgs e)
         {
             var player = GetPlayer();
             var button = sender as Button;
@@ -694,120 +443,22 @@ namespace MynaSkat
             {
                 return;
             }
-            var isYes = buttonReizenYes.Any((b) => b == button);
-            var isNo = buttonReizenNo.Any((b) => b == button);
-            // Game actions
-            if (skatTable.GamePlayer != null)
-            {
-                if (!skatTable.SkatTaken && checkBoxHand.IsChecked == false)
-                {
-                    if (isYes)
-                    {
-                        Button_TakeSkat(null, null);
-                    }
-                    else if (isNo)
-                    {
-                        checkBoxHand.IsChecked = true;
-                        CheckBoxOption_Click(null, null);
-                    }
-                }
-                else
-                {
-                    if (isYes)
-                    {
-                        Button_StartGame(null, null);
-                    }
-                    else if (isNo)
-                    {
-                        checkBoxHand.IsChecked = false;
-                        if (checkBoxOuvert.IsChecked == true &&
-                            skatTable.GamePlayer.Game.Type != GameType.Null)
-                        {
-                            checkBoxOuvert.IsChecked = false;
-                        }
-                        CheckBoxOption_Click(null, null);
-                    }
-                }
-            }
-            // Reizen actions
-            else
-            {
-                if (player.ReizStatus == ReizStatus.Sagen && !skatTable.ReizSaid)
-                {
-                    if (isYes)
-                    {
-                        skatTable.ReizSaid = true;
-                        skatTable.MoveNextReizValue();
-                    }
-                    else if (isNo)
-                    {
-                        player.ReizStatus = ReizStatus.Passen;
-                        foreach (var p in skatTable.Players)
-                        {
-                            if (p.Position == PlayerPosition.Geben && p.ReizStatus != ReizStatus.Passen)
-                            {
-                                p.ReizStatus = ReizStatus.Sagen;
-                                break;
-                            }
-                        }
-                        skatTable.ReizSaid = false;
-                    }
-                }
-                else if (player.ReizStatus == ReizStatus.Hoeren)
-                {
-                    if (isYes)
-                    {
-                        skatTable.ReizSaid = false;
-                    }
-                    else if (isNo)
-                    {
-                        skatTable.ReizSaid = false;
-                        player.ReizStatus = ReizStatus.Passen;
-                        foreach (var p in skatTable.Players)
-                        {
-                            if (p.Position == PlayerPosition.Geben && p.ReizStatus != ReizStatus.Passen) // weitersagen
-                            {
-                                p.ReizStatus = ReizStatus.Sagen;
-                            }
-                            else if (p.Position == PlayerPosition.Sagen && p.ReizStatus != ReizStatus.Passen) // hoeren
-                            {
-                                p.ReizStatus = ReizStatus.Hoeren;
-                            }
-                        }
-                    }
-                }
-                Player gamePlayer = null;
-                var cntPassen = 0;
-                foreach (var p in skatTable.Players)
-                {
-                    if (p.ReizStatus != ReizStatus.Passen)
-                    {
-                        gamePlayer = p;
-                        continue;
-                    }
-                    cntPassen++;
-                }
-                if (cntPassen == 3)
-                {
-                    skatTable.Spiele += 1;
-                    skatTable.StartNewRound();
-                }
-                else if (gamePlayer != null && cntPassen == 2)
-                {
-                    if (gamePlayer.Position == PlayerPosition.Hoeren && skatTable.CurrentReizValue == 0)
-                    {
-                        gamePlayer.ReizStatus = ReizStatus.Sagen;
-                    }
-                    else
-                    {
-                        skatTable.GamePlayer = gamePlayer;
-                        skatTable.GameStarted = false;
-                        skatTable.SkatTaken = false;
-                    }
-                }
-            }
+            var isAction1 = buttonAction1.Any((b) => b == button);
+            var isAction2 = buttonAction2.Any((b) => b == button);
+            skatTable.PerformPlayerAction(player, isAction1, isAction2);
             SelectActivePlayer();
             UpdateStatus();
+        }
+
+        private void ButtonGiveUp_Click(object sender, RoutedEventArgs e)
+        {
+            var player = GetPlayer();
+            if (init || player == null) return;
+            if (skatTable.CanGiveUp(player))
+            {
+                skatTable.GiveUp();
+                UpdateStatus();
+            }
         }
 
         private void Image_MouseDown(object sender, MouseButtonEventArgs e)
@@ -910,17 +561,6 @@ namespace MynaSkat
                 skatTable.Spiele += 1;
             }
             UpdateStatus();
-        }
-
-        private void ButtonGiveUp_Click(object sender, RoutedEventArgs e)
-        {
-            var player = GetPlayer();
-            if (init || player == null) return;
-            if (skatTable.CanGiveUp(player))
-            {
-                skatTable.GiveUp();
-                UpdateStatus();
-            }
         }
     }
 }
