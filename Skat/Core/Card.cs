@@ -37,6 +37,50 @@ namespace MynaSkat.Core
             return deck;
         }
 
+        public static string GetValueText(CardValue value)
+        {
+            switch (value)
+            {
+                case CardValue.Digit7:
+                    return "7";
+                case CardValue.Digit8:
+                    return "8";
+                case CardValue.Digit9:
+                    return "9";
+                case CardValue.Digit10:
+                    return "10";
+                case CardValue.Jack:
+                    return "Bube";
+                case CardValue.Queen:
+                    return "Dame";
+                case CardValue.King:
+                    return "König";
+                case CardValue.Ace:
+                    return "Ass";
+                default:
+                    break;
+            }
+            return "";
+        }
+
+        public static string GetColorText(CardColor color)
+        {
+            switch (color)
+            {
+                case CardColor.Clubs:
+                    return "Kreuz";
+                case CardColor.Spades:
+                    return "Pik";
+                case CardColor.Hearts:
+                    return "Herz";
+                case CardColor.Diamonds:
+                    return "Karo";
+                default:
+                    break;
+            }
+            return "";
+        }
+
         public static List<Card> Draw(RNGCryptoServiceProvider rng, List<Card> deck, int count)
         {
             var ret = new List<Card>();
@@ -166,7 +210,7 @@ namespace MynaSkat.Core
 
         public override string ToString()
         {
-            return $"{Color} {Value}";
+            return $"{GetColorText(Color)} {GetValueText(Value)}";
         }
     }
 }

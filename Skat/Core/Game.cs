@@ -34,7 +34,7 @@ namespace MynaSkat.Core
             string text = "";
             if (Type == GameType.Grand || Type == GameType.Color)
             {
-                text = Type == GameType.Grand ? "Grand" : Color.ToString();
+                text = Type == GameType.Grand ? "Grand" : Card.GetColorText(Color.Value);
                 if (Option.HasFlag(GameOption.Ouvert))
                 {
                     text += " Ouvert"; // schneider schwarz angesagt
@@ -353,20 +353,7 @@ namespace MynaSkat.Core
 
         public override string ToString()
         {
-            string ret;
-            if (Type != GameType.Color)
-            {
-                ret = $"{Type}";
-            }
-            else
-            {
-                ret = $"{Color}";
-            }
-            if (Option != GameOption.None)
-            {
-                ret += $" {Option}";
-            }
-            return ret;
+            return $"{GetGameText()}";
         }
     }
 }
