@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Net;
 using System.Security.Cryptography;
 
 namespace MynaSkat.Core
 {
-    public enum CardValue { Ziffer7 = 0, Ziffer8 = 1, Ziffer9 = 2, Ziffer10 = 3, Bube = 4, Dame = 5, Koenig = 6, Ass = 7 };
-    public enum CardColor { Karo = 0, Herz = 1, Pik = 2, Kreuz = 3 };
+    public enum CardValue { Digit7 = 0, Digit8 = 1, Digit9 = 2, Digit10 = 3, Jack = 4, Queen = 5, King = 6, Ace = 7 };
+
+    public enum CardColor { Diamonds = 0, Hearts = 1, Spades = 2, Clubs = 3 };
 
     public class Card
     {
         public int InternalNumber { get; set; }
+
         public CardValue Value { get; set; }
+
         public CardColor Color { get; set; }
 
         private Card(int nr)
@@ -52,34 +53,34 @@ namespace MynaSkat.Core
             if (game.Type == GameType.Grand ||
                 game.Type == GameType.Color && !game.Color.HasValue)
             {
-                if (Value == CardValue.Bube)
+                if (Value == CardValue.Jack)
                 {
                     orderNumber += 64;
                 }
-                else if (Value == CardValue.Ziffer10)
+                else if (Value == CardValue.Digit10)
                 {
                     orderNumber += 3;
                 }
-                else if (Value == CardValue.Dame || Value == CardValue.Koenig)
+                else if (Value == CardValue.Queen || Value == CardValue.King)
                 {
                     orderNumber -= 1;
                 }
             }
             else if (game.Type == GameType.Color && game.Color.HasValue)
             {
-                if (Color == game.Color && Value != CardValue.Bube)
+                if (Color == game.Color && Value != CardValue.Jack)
                 {
                     orderNumber += 32;
                 }
-                if (Value == CardValue.Bube)
+                if (Value == CardValue.Jack)
                 {
                     orderNumber += 64;
                 }
-                else if (Value == CardValue.Ziffer10)
+                else if (Value == CardValue.Digit10)
                 {
                     orderNumber += 3;
                 }
-                else if (Value == CardValue.Dame || Value == CardValue.Koenig)
+                else if (Value == CardValue.Queen || Value == CardValue.King)
                 {
                     orderNumber -= 1;
                 }
@@ -87,21 +88,21 @@ namespace MynaSkat.Core
             return orderNumber;
         }
 
-        public int Augen
+        public int Score
         {
             get
             {
                 switch (Value)
                 {
-                    case CardValue.Bube:
+                    case CardValue.Jack:
                         return 2;
-                    case CardValue.Dame:
+                    case CardValue.Queen:
                         return 3;
-                    case CardValue.Koenig:
+                    case CardValue.King:
                         return 4;
-                    case CardValue.Ziffer10:
+                    case CardValue.Digit10:
                         return 10;
-                    case CardValue.Ass:
+                    case CardValue.Ace:
                         return 11;
                     default:
                         break;
@@ -110,14 +111,14 @@ namespace MynaSkat.Core
             }
         }
 
-        public static int GetAugen(List<Card> stichList, List<Card> skat)
+        public static int GetScore(List<Card> stitches, List<Card> skat)
         {
-            var augen = stichList.Sum(c => c.Augen);
+            var score = stitches.Sum(c => c.Score);
             if (skat != null)
             {
-                augen += skat.Sum(c => c.Augen);
+                score += skat.Sum(c => c.Score);
             }
-            return augen;
+            return score;
         }
 
         public static Card DrawOne(RNGCryptoServiceProvider rng, List<Card> deck)
@@ -128,17 +129,17 @@ namespace MynaSkat.Core
             return card;
         }
 
-        private static int Next(RNGCryptoServiceProvider rng, int upper_limit)
+        private static int Next(RNGCryptoServiceProvider rng, int limit)
         {
-            if (upper_limit <= 0)
+            if (limit <= 0)
             {
-                throw new ArgumentException($"Invalid upper limit {upper_limit}.");
+                throw new ArgumentException($"Invalid upper limit {limit}.");
             }
-            if (upper_limit == 1)
+            if (limit == 1)
             {
                 return 0;
             }
-            return (int)(Next(rng) % (uint)upper_limit);
+            return (int)(Next(rng) % (uint)limit);
         }
 
         private static uint Next(RNGCryptoServiceProvider rng)

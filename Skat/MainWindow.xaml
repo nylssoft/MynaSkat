@@ -85,17 +85,17 @@
                 <Image x:Name="imageOuvert9" Source="Images/Back.gif" Margin="0,0,50,0"/>
             </StackPanel>
         </Grid>
-        <Grid x:Name="gridLastStich" Grid.Row="1" HorizontalAlignment="Right">
+        <Grid x:Name="gridLastStitch" Grid.Row="1" HorizontalAlignment="Right">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="140" />
                 <ColumnDefinition Width="100" />
                 <ColumnDefinition Width="100" />
                 <ColumnDefinition Width="100" />
             </Grid.ColumnDefinitions>
-            <CheckBox Grid.Column="0" x:Name="checkBoxLastStich" VerticalAlignment="Center" Content="Letzter Stich" Click="CheckBoxLastStich_Click" IsEnabled="False"/>
-            <Image Grid.Column="1" x:Name="imageLastStich0" Height="140" Width="90" Source="Images/Back.gif"/>
-            <Image Grid.Column="2" x:Name="imageLastStich1" Height="140" Width="90" Source="Images/Back.gif"/>
-            <Image Grid.Column="3" x:Name="imageLastStich2" Height="140" Width="90" Source="Images/Back.gif" />
+            <CheckBox Grid.Column="0" x:Name="checkBoxLastStitch" VerticalAlignment="Center" Content="Letzter Stich" Click="CheckBoxLastStitch_Click" IsEnabled="False"/>
+            <Image Grid.Column="1" x:Name="imageLastStitch0" Height="140" Width="90" Source="Images/Back.gif"/>
+            <Image Grid.Column="2" x:Name="imageLastStitch1" Height="140" Width="90" Source="Images/Back.gif"/>
+            <Image Grid.Column="3" x:Name="imageLastStitch2" Height="140" Width="90" Source="Images/Back.gif" />
         </Grid>
         <Grid x:Name="gridStich" Grid.Row="1" HorizontalAlignment="Center" Visibility="Hidden">
             <Grid.ColumnDefinitions>
@@ -103,9 +103,9 @@
                 <ColumnDefinition Width="100" />
                 <ColumnDefinition Width="100" />
             </Grid.ColumnDefinitions>
-            <Image x:Name="imageStich1" Grid.Column="0" Height="140" Width="90" MouseDown="ImageStich_MouseDown"/>
-            <Image x:Name="imageStich2" Grid.Column="1" Height="140" Width="90" MouseDown="ImageStich_MouseDown"/>
-            <Image x:Name="imageStich3" Grid.Column="2" Height="140" Width="90" MouseDown="ImageStich_MouseDown"/>
+            <Image x:Name="imageStitch1" Grid.Column="0" Height="140" Width="90" MouseDown="ImageStitch_MouseDown"/>
+            <Image x:Name="imageStitch2" Grid.Column="1" Height="140" Width="90" MouseDown="ImageStitch_MouseDown"/>
+            <Image x:Name="imageStitch3" Grid.Column="2" Height="140" Width="90" MouseDown="ImageStitch_MouseDown"/>
             <Button x:Name="buttonNewGame" Grid.Column="0" Grid.ColumnSpan="3" Content="Neues Spiel" Width="120" Height="50" Click="Button_NewGame"/>
         </Grid>		
         <Grid x:Name="gridSkat" Grid.Row="1" HorizontalAlignment="Center">
@@ -147,10 +147,10 @@
         <StackPanel Grid.Row="3" Orientation="Horizontal">
             <RadioButton GroupName="Game" x:Name="radioButtonGrand" Content="Grand" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
             <RadioButton GroupName="Game" x:Name="radioButtonNull" Content="Null" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click" />
-            <RadioButton GroupName="Game" x:Name="radioButtonKreuz" Content="Kreuz" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
-            <RadioButton GroupName="Game" x:Name="radioButtonPik" Content="Pik" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
-            <RadioButton GroupName="Game" x:Name="radioButtonHerz" Content="Herz" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
-            <RadioButton GroupName="Game" x:Name="radioButtonKaro" Content="Karo" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
+            <RadioButton GroupName="Game" x:Name="radioButtonClubs" Content="Kreuz" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
+            <RadioButton GroupName="Game" x:Name="radioButtonSpades" Content="Pik" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
+            <RadioButton GroupName="Game" x:Name="radioButtonHearts" Content="Herz" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
+            <RadioButton GroupName="Game" x:Name="radioButtonDiamonds" Content="Karo" VerticalAlignment="Center" Margin="5,0,5,0" Click="RadioButtonGameType_Click"/>
             <CheckBox x:Name="checkBoxOuvert" Content="Ouvert" VerticalAlignment="Center" Margin="100,0,5,0" Click="CheckBoxOption_Click"/>
             <CheckBox x:Name="checkBoxHand" Content="Hand" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>
             <CheckBox x:Name="checkBoxSchneider" Content="Schneider" VerticalAlignment="Center" Margin="5,0,5,0" Click="CheckBoxOption_Click"/>

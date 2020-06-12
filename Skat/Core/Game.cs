@@ -1,9 +1,6 @@
-﻿using Microsoft.VisualBasic;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.WebSockets;
-using System.Threading.Tasks;
 
 namespace MynaSkat.Core
 {
@@ -81,20 +78,20 @@ namespace MynaSkat.Core
             return text;
         }
 
-        public Spitzen GetSpitzen(List<Card> playerCards, List<Card> skat)
+        public MatadorsJackStraight GetMatadorsJackStraight(List<Card> playerCards, List<Card> skat)
         {
-            if (Type == GameType.Null) return new Spitzen();
+            if (Type == GameType.Null) return new MatadorsJackStraight();
             var cards = new List<Card>();
             cards.AddRange(playerCards);
             if (skat != null)
             {
                 cards.AddRange(skat);
             }
-            bool with = cards.Any((c) => c.Value == CardValue.Bube && c.Color == CardColor.Kreuz);
+            bool with = cards.Any((c) => c.Value == CardValue.Jack && c.Color == CardColor.Clubs);
             int value = 1;
-            foreach (var col in new[] { CardColor.Pik, CardColor.Herz, CardColor.Karo })
+            foreach (var col in new[] { CardColor.Spades, CardColor.Hearts, CardColor.Diamonds })
             {
-                var hasBube = cards.Any((c) => c.Value == CardValue.Bube && c.Color == col);
+                var hasBube = cards.Any((c) => c.Value == CardValue.Jack && c.Color == col);
                 if (with && !hasBube || !with && hasBube)
                 {
                     break;
@@ -103,7 +100,7 @@ namespace MynaSkat.Core
             }
             if (value == 4 && Type == GameType.Color)
             {
-                foreach (var v in new[] { CardValue.Ass, CardValue.Ziffer10, CardValue.Koenig, CardValue.Dame, CardValue.Ziffer9, CardValue.Ziffer8, CardValue.Ziffer7 })
+                foreach (var v in new[] { CardValue.Ace, CardValue.Digit10, CardValue.King, CardValue.Queen, CardValue.Digit9, CardValue.Digit8, CardValue.Digit7 })
                 {
                     var hasValue = cards.Any((c) => c.Color == Color.Value && c.Value == v);
                     if (with && !hasValue || !with && hasValue)
@@ -113,153 +110,153 @@ namespace MynaSkat.Core
                     value += 1;
                 }
             }
-            return new Spitzen { Mit = with, Anzahl = value };
+            return new MatadorsJackStraight { With = with, Count = value };
         }
 
-        public bool IsWinner(List<Card> stichList, List<Card> skat)
+        public bool IsWinner(List<Card> stitches, List<Card> skat)
         {
             if (Type == GameType.Null)
             {
-                return stichList.Count == 0;
+                return stitches.Count == 0;
             }
             if (Option.HasFlag(GameOption.Ouvert) ||
                 Option.HasFlag(GameOption.Schwarz))
             {
-                return stichList.Count == 30; // alle stiche bekommen, gegner keinen stich
+                return stitches.Count == 30; // alle stiche bekommen, gegner keinen stich
             }
             // punkte über alle stiche und skat
-            var augen = Card.GetAugen(stichList, skat);
+            var score = Card.GetScore(stitches, skat);
             if (Option.HasFlag(GameOption.Hand))
             {
-                return augen >= 90;
+                return score >= 90;
             }
-            return augen >= 61;
+            return score >= 61;
         }
 
-        public Spielwert GetSpielWert(Spitzen spitzen, List<Card> stichList, List<Card> skat, int reizWert)
+        public GameValue GetGameValue(MatadorsJackStraight spitzen, List<Card> stitches, List<Card> skat, int bidValue)
         {
-            var spielwert = new Spielwert();
-            var gameReizValue = GetReizWert(spitzen);
-            if (gameReizValue < reizWert)
+            var gameValue = new GameValue();
+            var gameBidValue = GetBidValue(spitzen);
+            if (gameBidValue < bidValue)
             {
-                int wert;
+                int baseValue;
                 if (Type == GameType.Null)
                 {
-                    wert = GetBestaendigerWert();
+                    baseValue = GetNullBaseValue();
                 }
                 else
                 {
-                    wert = GetGrundWert();
+                    baseValue = GetGrandOrColorBaseValue();
                 }
-                spielwert.Punkte = wert;
-                int mult = 1;
-                while (spielwert.Punkte < reizWert)
+                gameValue.Score = baseValue;
+                int factor = 1;
+                while (gameValue.Score < bidValue)
                 {
-                    spielwert.Punkte += wert;
-                    mult++;
+                    gameValue.Score += baseValue;
+                    factor++;
                 }
-                var calc = mult == 1 ? $"{wert}" : $"{mult} x {wert}";
-                string spiel;
+                var calc = factor == 1 ? $"{baseValue}" : $"{factor} x {baseValue}";
+                string game;
                 if (Type != GameType.Color)
                 {
-                    spiel = $"{Type}";
+                    game = $"{Type}";
                 }
                 else
                 {
-                    spiel = $"{Color}";
+                    game = $"{Color}";
                 }
-                spielwert.Ueberreizt = true;
-                spielwert.Gewonnen = false;
-                spielwert.Punkte *= -2;
-                spielwert.Beschreibung = $"Überreizt mit {reizWert}! Verloren! {spiel} : {calc} x -2 = {spielwert.Punkte}.";
+                gameValue.BidExceeded = true;
+                gameValue.IsWinner = false;
+                gameValue.Score *= -2;
+                gameValue.Description = $"Überreizt mit {bidValue}! Verloren! {game} : {calc} x -2 = {gameValue.Score}.";
             }
             else
             {
                 string calc;
-                string spiel;
-                int wert;
-                int mult = 1;
+                string game;
+                int baseValue;
+                int factor = 1;
                 if (Type == GameType.Null)
                 {
-                    wert = GetBestaendigerWert();
-                    spielwert.Punkte = wert;
-                    spiel = $"{Type} ";
+                    baseValue = GetNullBaseValue();
+                    gameValue.Score = baseValue;
+                    game = $"{Type} ";
                     if (Option != GameOption.None)
                     {
-                        spiel += $" {Option}";
+                        game += $" {Option}";
                     }
                 }
                 else
                 {
-                    var mit = spitzen.Mit ? "Mit" : "Ohne";
-                    spiel = $"{mit} {spitzen.Anzahl} spielt {spitzen.Spielt} ";
-                    mult = spitzen.Spielt;
-                    var augen = Card.GetAugen(stichList, skat);
-                    bool schneider = augen >= 90;
-                    bool schwarz = stichList.Count == 30;
+                    var with = spitzen.With ? "Mit" : "Ohne";
+                    game = $"{with} {spitzen.Count} spielt {spitzen.Play} ";
+                    factor = spitzen.Play;
+                    var score = Card.GetScore(stitches, skat);
+                    bool schneider = score >= 90;
+                    bool schwarz = stitches.Count == 30;
                     if (Option.HasFlag(GameOption.Hand))
                     {
-                        mult++;
-                        spiel += $"Hand {mult} ";
+                        factor++;
+                        game += $"Hand {factor} ";
                     }
                     if (Option.HasFlag(GameOption.Ouvert))
                     {
-                        mult++;
-                        spiel += $"Ouvert {mult} ";
+                        factor++;
+                        game += $"Ouvert {factor} ";
                     }
                     if (schneider)
                     {
-                        mult++;
-                        spiel += $"Schneider {mult} ";
+                        factor++;
+                        game += $"Schneider {factor} ";
                     }
                     if (Option.HasFlag(GameOption.Schneider))
                     {
-                        mult++;
-                        spiel += $"Angesagt {mult} ";
+                        factor++;
+                        game += $"Angesagt {factor} ";
                     }
                     if (schwarz)
                     {
-                        mult++;
-                        spiel += $"Schwarz {mult} ";
+                        factor++;
+                        game += $"Schwarz {factor} ";
                     }
                     if (Option.HasFlag(GameOption.Schwarz))
                     {
-                        mult++;
-                        spiel += $"Angesagt {mult} ";
+                        factor++;
+                        game += $"Angesagt {factor} ";
                     }
                     if (Type != GameType.Color)
                     {
-                        spiel += $"{Type} ";
+                        game += $"{Type} ";
                     }
                     else
                     {
-                        spiel += $"{Color} ";
+                        game += $"{Color} ";
                     }
-                    wert = GetGrundWert();
+                    baseValue = GetGrandOrColorBaseValue();
                 }
-                spielwert.Punkte = mult * wert;
-                calc = $"{mult} x {wert}";
-                if (!IsWinner(stichList, skat))
+                gameValue.Score = factor * baseValue;
+                calc = $"{factor} x {baseValue}";
+                if (!IsWinner(stitches, skat))
                 {
-                    spielwert.Punkte *= -2;
-                    spielwert.Gewonnen = false;
-                    spielwert.Beschreibung = $"Verloren! {spiel}: {calc} x -2 = {spielwert.Punkte}.";
+                    gameValue.Score *= -2;
+                    gameValue.IsWinner = false;
+                    gameValue.Description = $"Verloren! {game}: {calc} x -2 = {gameValue.Score}.";
                 }
                 else
                 {
-                    spielwert.Beschreibung = $"Gewonnen! {spiel}: {calc} = {spielwert.Punkte}.";
+                    gameValue.Description = $"Gewonnen! {game}: {calc} = {gameValue.Score}.";
                 }
             }
-            return spielwert;
+            return gameValue;
         }
 
-        public int GetReizWert(Spitzen spitzen)
+        public int GetBidValue(MatadorsJackStraight jackStraight)
         {
             if (Type == GameType.Null)
             {
-                return GetBestaendigerWert();
+                return GetNullBaseValue();
             }
-            int mult = spitzen.Spielt;
+            int mult = jackStraight.Play;
             if (Option.HasFlag(GameOption.Hand))
             {
                 mult++;
@@ -276,14 +273,14 @@ namespace MynaSkat.Core
             {
                 mult++;
             }
-            return mult * GetGrundWert();
+            return mult * GetGrandOrColorBaseValue();
         }
         
         /// <summary>
         /// Returns the value for the Null game.
         /// </summary>
         /// <returns>game value</returns>
-        public int GetBestaendigerWert()
+        public int GetNullBaseValue()
         {
             if (Type == GameType.Null)
             {
@@ -305,10 +302,10 @@ namespace MynaSkat.Core
         }
 
         /// <summary>
-        /// Returns the value for a Grand or Color game.
+        /// Returns the base value for a Grand or Color game.
         /// </summary>
-        /// <returns>game value</returns>
-        public int GetGrundWert()
+        /// <returns>game base value</returns>
+        public int GetGrandOrColorBaseValue()
         {
             if (Type == GameType.Grand)
             {
@@ -318,13 +315,13 @@ namespace MynaSkat.Core
             {
                 switch (Color)
                 {
-                    case CardColor.Kreuz:
+                    case CardColor.Clubs:
                         return 12;
-                    case CardColor.Pik:
+                    case CardColor.Spades:
                         return 11;
-                    case CardColor.Herz:
+                    case CardColor.Hearts:
                         return 10;
-                    case CardColor.Karo:
+                    case CardColor.Diamonds:
                         return 9;
                     default:
                         break;

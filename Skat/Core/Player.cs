@@ -1,45 +1,42 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace MynaSkat.Core
 {
-    public enum PlayerPosition { Geben, Hoeren, Sagen, Weitersagen };
+    public enum BidOrder { Deal, Response, Bid, Continue };
 
-    public enum ReizStatus { Sagen, Hoeren, Passen, Warten };
+    public enum BidStatus { Bid, Accept, Pass, Wait };
 
     public class Player
     {
-        public Player(string name, PlayerPosition position)
+        public Player(string name, BidOrder position)
         {
             Name = name;
-            Position = position;
-            if (position == PlayerPosition.Sagen)
+            BidOrder = position;
+            if (position == BidOrder.Bid)
             {
-                ReizStatus = ReizStatus.Sagen;
+                BidStatus = BidStatus.Bid;
             }
-            else if (position == PlayerPosition.Hoeren)
+            else if (position == BidOrder.Response)
             {
-                ReizStatus = ReizStatus.Hoeren;
+                BidStatus = BidStatus.Accept;
             }
             else
             {
-                ReizStatus = ReizStatus.Warten;
+                BidStatus = BidStatus.Wait;
             }
         }
 
         public string Name { get; set; }
 
-        public PlayerPosition Position { get; set; }
+        public BidOrder BidOrder { get; set; }
 
         public Game Game { get; set; } = new Game(GameType.Grand);
 
         public List<Card> Cards { get; set; } = new List<Card>();
 
-        public List<Card> Stiche { get; set; } = new List<Card>();
+        public List<Card> Stitches { get; set; } = new List<Card>();
 
-        public ReizStatus ReizStatus { get; set; } = ReizStatus.Warten;
+        public BidStatus BidStatus { get; set; } = BidStatus.Wait;
 
         public int Score { get; set; }
 
@@ -60,12 +57,12 @@ namespace MynaSkat.Core
 
         public override int GetHashCode()
         {
-            return Name.GetHashCode();
+            return System.HashCode.Combine(Name);
         }
 
         public override string ToString()
         {
-            return $"Spieler '{Name}', {Position}, {ReizStatus}";
+            return $"Spieler '{Name}', {BidOrder}, {BidStatus}";
         }
     }
 }
