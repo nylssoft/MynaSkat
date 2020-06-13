@@ -23,18 +23,20 @@ namespace MynaSkat.Core
             Color = gameColor;
         }
 
-        /// <summary>
-        /// Returns the game of the text with all options.
-        /// </summary>
-        /// <param name="schneider">true if schneider; false otherwise</param>
-        /// <param name="schwarz">true if schwarz; false otherwise</param>
-        /// <returns>game text</returns>
-        public string GetGameText(bool schneider = false, bool schwarz = false)
+        public string GetGameText()
         {
-            string text = "";
+            if (Type == GameType.Null)
+            {
+                return "Null";
+            }
+            return Type == GameType.Grand ? "Grand" : Card.GetColorText(Color.Value);
+        }
+
+        public string GetGameAndOptionText()
+        {
+            string text = GetGameText();
             if (Type == GameType.Grand || Type == GameType.Color)
             {
-                text = Type == GameType.Grand ? "Grand" : Card.GetColorText(Color.Value);
                 if (Option.HasFlag(GameOption.Ouvert))
                 {
                     text += " Ouvert"; // schneider schwarz angesagt
@@ -45,17 +47,9 @@ namespace MynaSkat.Core
                     {
                         text += " Hand";
                     }
-                    if (schneider)
-                    {
-                        text += " Schneider";
-                    }
                     if (Option.HasFlag(GameOption.Schneider))
                     {
                         text += " Schneider Angesagt";
-                    }
-                    if (schwarz)
-                    {
-                        text += " Schwarz";
                     }
                     if (Option.HasFlag(GameOption.Schwarz))
                     {
@@ -65,7 +59,6 @@ namespace MynaSkat.Core
             }
             else if (Type == GameType.Null)
             {
-                text = "Null";
                 if (Option.HasFlag(GameOption.Ouvert))
                 {
                     text += " Ouvert";
@@ -156,19 +149,10 @@ namespace MynaSkat.Core
                     factor++;
                 }
                 var calc = factor == 1 ? $"{baseValue}" : $"{factor} x {baseValue}";
-                string game;
-                if (Type != GameType.Color)
-                {
-                    game = $"{Type}";
-                }
-                else
-                {
-                    game = $"{Color}";
-                }
                 gameValue.BidExceeded = true;
                 gameValue.IsWinner = false;
                 gameValue.Score *= -2;
-                gameValue.Description = $"Überreizt mit {bidValue}! Verloren! {game} : {calc} x -2 = {gameValue.Score}.";
+                gameValue.Description = $"Überreizt mit {bidValue}! Verloren! {GetGameAndOptionText()} : {calc} x -2 = {gameValue.Score}.";
             }
             else
             {
@@ -180,11 +164,7 @@ namespace MynaSkat.Core
                 {
                     baseValue = GetNullBaseValue();
                     gameValue.Score = baseValue;
-                    game = $"{Type} ";
-                    if (Option != GameOption.None)
-                    {
-                        game += $" {Option}";
-                    }
+                    game = GetGameAndOptionText();
                 }
                 else
                 {
@@ -212,6 +192,10 @@ namespace MynaSkat.Core
                     if (Option.HasFlag(GameOption.Schneider))
                     {
                         factor++;
+                        if (!schneider)
+                        {
+                            game += "Schneider ";
+                        }
                         game += $"Angesagt {factor} ";
                     }
                     if (schwarz)
@@ -222,16 +206,13 @@ namespace MynaSkat.Core
                     if (Option.HasFlag(GameOption.Schwarz))
                     {
                         factor++;
+                        if (!schwarz)
+                        {
+                            game += "Schwarz ";
+                        }
                         game += $"Angesagt {factor} ";
                     }
-                    if (Type != GameType.Color)
-                    {
-                        game += $"{Type} ";
-                    }
-                    else
-                    {
-                        game += $"{Color} ";
-                    }
+                    game += $"{GetGameText()} ";
                     baseValue = GetGrandOrColorBaseValue();
                 }
                 gameValue.Score = factor * baseValue;
@@ -353,7 +334,7 @@ namespace MynaSkat.Core
 
         public override string ToString()
         {
-            return $"{GetGameText()}";
+            return $"{GetGameAndOptionText()}";
         }
     }
 }

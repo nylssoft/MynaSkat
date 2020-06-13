@@ -488,7 +488,7 @@ namespace MynaSkat.Core
                             ret.ActionLabels.Add("Hand spielen");
                             ret.Actions.Add(PlayerAction.TakeSkat);
                             ret.Actions.Add(PlayerAction.PlayHand);
-                            ret.Game += $"Du wirst {viewPlayer.Game.GetGameText()} spielen. ";
+                            ret.Game += $"Du wirst {viewPlayer.Game.GetGameAndOptionText()} spielen. ";
                         }
                     }
                     else
@@ -503,7 +503,7 @@ namespace MynaSkat.Core
                                 ret.ActionLabels.Add("Kein Handspiel!");
                                 ret.Actions.Add(PlayerAction.DoNotPlayHand);
                             }
-                            ret.Game += $"Du wirst {viewPlayer.Game.GetGameText()} spielen. ";
+                            ret.Game += $"Du wirst {viewPlayer.Game.GetGameAndOptionText()} spielen. ";
                         }
                     }
                     ret.Status += $" Du hast {CurrentBidValue} angesagt.";
@@ -551,7 +551,7 @@ namespace MynaSkat.Core
                         {
                             ret.Game += "Überreizt! ";
                         }
-                        ret.Game += $"Spielt {viewPlayer.Game.GetGameText()}. ";
+                        ret.Game += $"Spielt {viewPlayer.Game.GetGameAndOptionText()}. ";
                         ret.Game += $"Hat {CurrentBidValue} gesagt. ";
                     }
                 }
