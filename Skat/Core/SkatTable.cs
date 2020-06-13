@@ -678,5 +678,78 @@ namespace MynaSkat.Core
                 }
             }
         }
+
+        public void CollectStitch(Player player)
+        {
+            if (GameStarted && CurrentPlayer == player && Stitch.Count >= 3)
+            {
+                LastStitch.Clear();
+                LastStitch.AddRange(Stitch);
+                Stitch.Clear();
+            }
+            if (CurrentPlayer == player &&
+                GamePlayer == player &&
+                player.Game.Type == GameType.Null && player.Stitches.Any())
+            {
+                foreach (var p in Players)
+                {
+                    p.Cards.Clear();
+                }
+            }
+            if (player.Cards.Count == 0)
+            {
+                var game = GamePlayer.Game;
+                GameValue = game.GetGameValue(MatadorsJackStraight, GamePlayer.Stitches, Skat, CurrentBidValue);
+                GamePlayer.Score += GameValue.Score;
+                TotalGames += 1;
+            }
+        }
+
+        public void PlayCard(Player player, Card card)
+        {
+            // druecken
+            if (GamePlayer == player && SkatTaken && !GameStarted)
+            {
+                if (Skat.Count < 2)
+                {
+                    player.Cards.Remove(card);
+                    Skat.Add(card);
+                }
+            }
+            else if (GameStarted && CurrentPlayer == player)
+            {
+                if (Stitch.Count == 3)
+                {
+                    CollectStitch(player);
+                    if (player.Cards.Count == 0) // @TODO: game ended
+                    {
+                        card = null;
+                    }
+                }
+                if (card != null && IsValidForStitch(card))
+                {
+                    player.Cards.Remove(card);
+                    CurrentPlayer = GetNextPlayer(player);
+                    Stitch.Add(card);
+                    if (Stitch.Count == 3)
+                    {
+                        var stichPlayer = GetStitchPlayer();
+                        stichPlayer.Stitches.AddRange(Stitch);
+                        CurrentPlayer = stichPlayer;
+                    }
+                }
+            }
+        }
+
+        public bool CanPickupSkat(Player player)
+        {
+            return GamePlayer == player && SkatTaken && !GameStarted;
+        }
+
+        public void PickupSkat(Player player, Card card)
+        {
+            Skat.Remove(card);
+            player.Cards.Add(card);
+        }
     }
 }

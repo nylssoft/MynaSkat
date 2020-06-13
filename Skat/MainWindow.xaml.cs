@@ -22,12 +22,8 @@ namespace MynaSkat
         private TextBlock[] textBlockGame;
         private Button[] buttonAction1;
         private Button[] buttonAction2;
-        private Image[] imageSkat;
-        private Image[] imageCard;
-        private Image[] imageStitch;
-        private Image[] imageOuvert;
-        private Image[] imageLastStitch;
         private DateTime lastCardPlayed = DateTime.Now;
+        private bool showLastStitch = false;
 
         public MainWindow()
         {
@@ -37,13 +33,6 @@ namespace MynaSkat
             textBlockGame = new TextBlock[] { textBlockGame1, textBlockGame2, textBlockGame3 };
             buttonAction1 = new Button[] { buttonPlayer1Action1, buttonPlayer2Action1, buttonPlayer3Action1 };
             buttonAction2 = new Button[] { buttonPlayer1Action2, buttonPlayer2Action2, buttonPlayer3Action2 };
-            imageSkat = new Image[] { imageSkat0, imageSkat1 };
-            imageCard = new Image[] { imageCard0, imageCard1, imageCard2, imageCard3, imageCard4, imageCard5,
-                imageCard6, imageCard7, imageCard8, imageCard9, imageCard10, imageCard11};
-            imageStitch = new Image[] { imageStitch1, imageStitch2, imageStitch3 };
-            imageOuvert = new Image[] { imageOuvert0, imageOuvert1, imageOuvert2, imageOuvert3, imageOuvert4, imageOuvert5,
-                imageOuvert6, imageOuvert7, imageOuvert8, imageOuvert9 };
-            imageLastStitch = new Image[] { imageLastStitch0, imageLastStitch1, imageLastStitch2 };
             bitmapCache = new Dictionary<int, BitmapImage>();
             for (int idx = 0; idx < 32; idx++)
             {
@@ -70,8 +59,6 @@ namespace MynaSkat
                 radioButtonPlayer[idx].Content = player.Name;
                 idx++;
             }
-            imageSkat0.Source = bitmapBack;
-            imageSkat1.Source = bitmapBack;
             init = false;
             SelectActivePlayer();
             UpdateStatus();
@@ -92,9 +79,8 @@ namespace MynaSkat
             if (init || viewPlayer == null) return;
             // sort and update cards for viewed player
             viewPlayer.SortCards();
-            UpdatePlayerCards(viewPlayer);
-            UpdateOuvertCards(viewPlayer);
-            UpdateLastStichCards(viewPlayer);
+            Render(viewPlayer);
+            UpdateControls();
             // update game type for viewed player
             radioButtonGrand.IsChecked = viewPlayer.Game.Type == GameType.Grand;
             radioButtonNull.IsChecked = viewPlayer.Game.Type == GameType.Null;
@@ -156,10 +142,6 @@ namespace MynaSkat
             {
                 buttonNewGame.Visibility = Visibility.Hidden;
             }
-
-            checkBoxLastStitch.IsEnabled = skatTable.CanViewLastStitch(player);
-            checkBoxLastStitch.Visibility = checkBoxLastStitch.IsEnabled ? Visibility.Visible : Visibility.Hidden;
-
             buttonGiveUp.IsEnabled = skatTable.CanGiveUp(player);
             buttonGiveUp.Visibility = buttonGiveUp.IsEnabled ? Visibility.Visible : Visibility.Hidden;
 
@@ -179,65 +161,22 @@ namespace MynaSkat
                 gridPlayCards.Visibility = Visibility.Visible;
                 gridLastStitch.Visibility = Visibility.Visible;
             }
-        }
 
-        private void UpdatePlayerCards(Player player)
-        {
-            // skat view
-            if (skatTable.SkatTaken)
-            {
-                imageSkat[0].Source = null;
-                imageSkat[1].Source = null;
-            }
-            else
-            {
-                imageSkat[0].Source = bitmapBack;
-                imageSkat[1].Source = bitmapBack;
-            }
-            if (player == skatTable.GamePlayer && skatTable.SkatTaken && !skatTable.GameStarted)
-            {
-                var skatIdx = 0;
-                foreach (var card in skatTable.Skat)
-                {
-                    imageSkat[skatIdx++].Source = bitmapCache[card.InternalNumber];
-                }
-            }
             if (skatTable.GameStarted)
             {
-                gridStich.Visibility = Visibility.Visible;
+                gridStitch.Visibility = Visibility.Visible;
                 gridSkat.Visibility = Visibility.Hidden;
-                for (var stichIdx = 0; stichIdx < 3; stichIdx++)
-                {
-                    if (stichIdx < skatTable.Stitch.Count)
-                    {
-                        imageStitch[stichIdx].Source = bitmapCache[skatTable.Stitch[stichIdx].InternalNumber];
-                    }
-                    else
-                    {
-                        imageStitch[stichIdx].Source = null;
-                    }
-                }
             }
             else
             {
-                gridStich.Visibility = Visibility.Hidden;
+                gridStitch.Visibility = Visibility.Hidden;
                 gridSkat.Visibility = Visibility.Visible;
             }
-            // card view with 2 extra cards for Skat
-            foreach (var image in imageCard)
-            {
-                image.Source = null;
-            }
-            var cardIdx = 0;
-            foreach (var card in player.Cards)
-            {
-                imageCard[cardIdx++].Source = bitmapCache[card.InternalNumber];
-            }
-            UpdateControls();
         }
 
         private Player GetPlayer()
         {
+            if (skatTable == null || skatTable.Players.Count < 3) return null;
             if (radioButtonPlayer1.IsChecked == true)
             {
                 return skatTable.Players[0];
@@ -279,44 +218,6 @@ namespace MynaSkat
             return -1;
         }
 
-        private void UpdateOuvertCards(Player player)
-        {
-            foreach (var img in imageOuvert)
-            {
-                img.Source = null;
-            }
-            if (skatTable.GameStarted && skatTable.GamePlayer.Game.Option.HasFlag(GameOption.Ouvert) &&
-                player != skatTable.GamePlayer)
-            {
-                int idx = 0;
-                foreach (var card in skatTable.GamePlayer.Cards)
-                {
-                    imageOuvert[idx++].Source = bitmapCache[card.InternalNumber];
-                }
-            }
-        }
-
-        private void UpdateLastStichCards(Player player)
-        {
-            var show =
-                skatTable.GameStarted &&
-                skatTable.LastStitch.Count > 0 &&
-                player.Cards.Count > 0 &&
-                player == skatTable.CurrentPlayer;
-            foreach (var img in imageLastStitch)
-            {
-                img.Source =  show ? bitmapBack : null;
-            }
-            if (show && checkBoxLastStitch.IsChecked == true)
-            {
-                int idx = 0;
-                foreach (var card in skatTable.LastStitch)
-                {
-                    imageLastStitch[idx++].Source = bitmapCache[card.InternalNumber];
-                }
-            }
-        }
-
         private GameOption GetGameOption()
         {
             GameOption ret = GameOption.None;
@@ -325,6 +226,102 @@ namespace MynaSkat
             if (checkBoxSchneider.IsChecked == true) ret |= GameOption.Schneider;
             if (checkBoxSchwarz.IsChecked == true) ret |= GameOption.Schwarz;
             return ret;
+        }
+
+        private void Render(Player player)
+        {
+            if (skatTable == null || player == null) return;
+            RenderOuvertCards(player);
+            RenderSkat(player);
+            RenderLastStitch(player);
+            RenderStitch();
+            RenderPlayerCards(player);
+        }
+
+        private void RenderOuvertCards(Player player)
+        {
+            List<Card> ouvertCards = null;
+            if (skatTable.GameStarted && skatTable.GamePlayer.Game.Option.HasFlag(GameOption.Ouvert) &&
+                player != skatTable.GamePlayer)
+            {
+                ouvertCards = skatTable.GamePlayer.Cards;
+            }
+            RenderCards(gridOuvertCards, ouvertCards);
+        }
+
+        private void RenderStitch()
+        {
+            RenderCards(gridStitch, skatTable.Stitch, ImageStitch_MouseDown);
+        }
+
+        private void RenderLastStitch(Player player)
+        {
+            List<Card> cards = null;
+            if (skatTable.CanViewLastStitch(player))
+            {
+                cards = skatTable.LastStitch;
+            }
+            RenderCards(gridLastStitch, cards, ImageLastStitch_MouseDown, !showLastStitch);
+        }
+
+        private void RenderSkat(Player player)
+        {
+            var canPickup = skatTable.CanPickupSkat(player);
+            List<Card> skat = null;
+            if (!skatTable.SkatTaken || canPickup)
+            {
+                skat = skatTable.Skat;
+            }
+            RenderCards(gridSkat, skat, ImageSkat_MouseDown, !canPickup);
+        }
+
+        private void RenderPlayerCards(Player player)
+        {
+            RenderCards(gridPlayCards, player?.Cards, ImagePlayerCard_MouseDown);
+        }
+
+        private void RenderCards(Grid grid, List<Card> cards, MouseButtonEventHandler mouseDown = null, bool showBack = false)
+        {
+            grid.Children.Clear();
+            var cnt = cards?.Count;
+            if (cnt > 0)
+            {
+                StackPanel p = new StackPanel();
+                p.HorizontalAlignment = HorizontalAlignment.Left;
+                p.Orientation = Orientation.Horizontal;
+                int width = 90;
+                int height = 140;
+                double rw = grid.ActualWidth - width / 2;
+                double v = (rw - width * cnt.Value) / cnt.Value;
+                if (v > 10.0)
+                {
+                    v = 10.0;
+                }
+                bool first = true;
+                foreach (var card in cards)
+                {
+                    var image = new Image();
+                    image.Source = showBack ? bitmapBack : bitmapCache[card.InternalNumber];
+                    if (first)
+                    {
+                        image.Margin = new Thickness(0, 0, 0, 0);
+                        first = false;
+                    }
+                    else
+                    {
+                        image.Margin = new Thickness(v, 0, 0, 0);
+                    }
+                    image.Width = width;
+                    image.Height = height;
+                    if (mouseDown != null)
+                    {
+                        image.MouseDown += mouseDown;
+                    }
+                    image.Tag = card;
+                    p.Children.Add(image);
+                }
+                grid.Children.Add(p);
+            }
         }
 
         // callbacks
@@ -340,6 +337,11 @@ namespace MynaSkat
             timer.Start();
         }
 
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            Render(GetPlayer());
+        }
+
         private void Timer_Tick(object sender, EventArgs e)
         {
             if (checkBoxComputer.IsChecked == false ||
@@ -353,27 +355,31 @@ namespace MynaSkat
             {
                 var deck = new List<Card>();
                 deck.AddRange(player.Cards);
-                using (var prng = new RNGCryptoServiceProvider())
+                using var prng = new RNGCryptoServiceProvider();
+                while (deck.Count > 0)
                 {
-                    while (deck.Count > 0)
+                    var card = Card.DrawOne(prng, deck);
+                    if (skatTable.IsValidForStitch(card))
                     {
-                        var card = Card.DrawOne(prng, deck);
-                        if (skatTable.IsValidForStitch(card))
+                        int idx = 0;
+                        foreach (var c in player.Cards)
                         {
-                            int idx = 0;
-                            foreach (var c in player.Cards)
+                            if (card == c)
                             {
-                                if (card == c)
+                                skatTable.PlayCard(player, card);
+                                if (player != skatTable.CurrentPlayer)
                                 {
-                                    Image_MouseDown(imageCard[idx], null);
-                                    break;
+                                    SelectActivePlayer();
                                 }
-                                idx++;
+                                lastCardPlayed = DateTime.Now;
+                                break;
                             }
-                            break;
+                            idx++;
                         }
+                        break;
                     }
                 }
+                UpdateStatus();
             }
         }
 
@@ -381,7 +387,7 @@ namespace MynaSkat
         {
             var player = GetPlayer();
             if (init || player == null) return;
-            checkBoxLastStitch.IsChecked = false;
+            showLastStitch = false;
             UpdateStatus();
         }
 
@@ -393,7 +399,7 @@ namespace MynaSkat
             checkBoxHand.IsChecked = false;
             checkBoxSchneider.IsChecked = false;
             checkBoxSchwarz.IsChecked = false;
-            checkBoxLastStitch.IsChecked = false;
+            showLastStitch = false;
             player.Game = new Game(GetGameType(), GetGameColor())
             {
                 Option = GetGameOption()
@@ -405,7 +411,7 @@ namespace MynaSkat
         {
             var player = GetPlayer();
             if (init || player == null) return;
-            checkBoxLastStitch.IsChecked = false;
+            showLastStitch = false;
             skatTable.SetGameOption(player, GetGameOption());
             UpdateStatus();
         }
@@ -424,10 +430,8 @@ namespace MynaSkat
             {
                 player.SortCards();
             }
-            imageSkat0.Source = bitmapBack;
-            imageSkat1.Source = bitmapBack;
             SelectActivePlayer();
-            checkBoxLastStitch.IsChecked = false;
+            showLastStitch = false;
             UpdateStatus();
         }
 
@@ -463,74 +467,33 @@ namespace MynaSkat
             }
         }
 
-        private void Image_MouseDown(object sender, MouseButtonEventArgs e)
+        private void ImageSkat_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            var player = GetPlayer();
-            if (init || player == null) return;
-            checkBoxLastStitch.IsChecked = false;
-            lastCardPlayed = DateTime.Now;
             var image = sender as Image;
-            // druecken
-            if (skatTable.GamePlayer == player && skatTable.SkatTaken && !skatTable.GameStarted)
+            var card = image?.Tag as Card;
+            var player = GetPlayer();
+            if (init || player == null || image == null || card == null) return;
+            showLastStitch = false;
+            lastCardPlayed = DateTime.Now;
+            if (skatTable.CanPickupSkat(player))
             {
-                if (image == imageSkat0 || image == imageSkat1)
-                {
-                    int idx = image == imageSkat0 ? 0 : 1;
-                    if (idx < skatTable.Skat.Count)
-                    {
-                        var card = skatTable.Skat[idx];
-                        skatTable.Skat.RemoveAt(idx);
-                        player.Cards.Add(card);
-                    }
-                }
-                else if (skatTable.Skat.Count < 2)
-                {
-                    for (int idx = 0; idx < imageCard.Length; idx++)
-                    {
-                        if (imageCard[idx] == image)
-                        {
-                            var card = player.Cards[idx];
-                            player.Cards.RemoveAt(idx);
-                            skatTable.Skat.Add(card);
-                            break;
-                        }
-                    }
-                }
+                skatTable.PickupSkat(player, card);
             }
-            else if (skatTable.GameStarted && skatTable.CurrentPlayer == player)
+            UpdateStatus();
+        }
+
+        private void ImagePlayerCard_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var image = sender as Image;
+            var card = image?.Tag as Card;
+            var player = GetPlayer();
+            if (init || player == null || image == null || card == null) return;
+            showLastStitch = false;
+            lastCardPlayed = DateTime.Now;
+            skatTable.PlayCard(player, card);
+            if (player != skatTable.CurrentPlayer)
             {
-                for (int idx = 0; idx < imageCard.Length; idx++)
-                {
-                    if (imageCard[idx] == image)
-                    {
-                        if (skatTable.Stitch.Count == 3)
-                        {
-                            ImageStitch_MouseDown(sender, e);
-                            if (player.Cards.Count == 0)
-                            {
-                                break;
-                            }
-                        }
-                        var card = player.Cards[idx];
-                        if (!skatTable.IsValidForStitch(card))
-                        {
-                            break;
-                        }
-                        var playerIdx = GetPlayerIndex(player);
-                        player.Cards.RemoveAt(idx);
-                        var nextPlayerIdx = (playerIdx + 1) % 3;
-                        skatTable.CurrentPlayer = skatTable.Players[nextPlayerIdx];
-                        skatTable.Stitch.Add(card);
-                        if (skatTable.Stitch.Count == 3)
-                        {
-                            var stichPlayer = skatTable.GetStitchPlayer();
-                            stichPlayer.Stitches.AddRange(skatTable.Stitch);
-                            skatTable.CurrentPlayer = stichPlayer;
-                        }
-                        SelectActivePlayer();
-                        break;
-                    }
-                }
+                SelectActivePlayer();
             }
             UpdateStatus();
         }
@@ -539,28 +502,17 @@ namespace MynaSkat
         {
             var player = GetPlayer();
             if (init || player == null) return;
-            checkBoxLastStitch.IsChecked = false;
-            if (skatTable.GameStarted && skatTable.CurrentPlayer == player && skatTable.Stitch.Count >= 3)
+            showLastStitch = false;
+            skatTable.CollectStitch(player);
+            UpdateStatus();
+        }
+        private void ImageLastStitch_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var player = GetPlayer();
+            if (init || player == null) return;
+            if (skatTable.CanViewLastStitch(player))
             {
-                skatTable.LastStitch.Clear();
-                skatTable.LastStitch.AddRange(skatTable.Stitch);
-                skatTable.Stitch.Clear();
-            }
-            if (skatTable.CurrentPlayer == player && 
-                skatTable.GamePlayer == player &&
-                player.Game.Type == GameType.Null && player.Stitches.Any())
-            {
-                foreach (var p in skatTable.Players)
-                {
-                    p.Cards.Clear();
-                }
-            }
-            if (player.Cards.Count == 0)
-            {
-                var game = skatTable.GamePlayer.Game;
-                skatTable.GameValue = game.GetGameValue(skatTable.MatadorsJackStraight, skatTable.GamePlayer.Stitches, skatTable.Skat, skatTable.CurrentBidValue);
-                skatTable.GamePlayer.Score += skatTable.GameValue.Score;
-                skatTable.TotalGames += 1;
+                showLastStitch = !showLastStitch;
             }
             UpdateStatus();
         }
