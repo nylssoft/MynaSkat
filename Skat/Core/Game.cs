@@ -110,16 +110,15 @@ namespace MynaSkat.Core
         {
             if (Type == GameType.Null)
             {
-                return stitches.Count == 0;
+                return stitches.Count == 0; // no stitches
             }
             if (Option.HasFlag(GameOption.Ouvert) ||
                 Option.HasFlag(GameOption.Schwarz))
             {
-                return stitches.Count == 30; // alle stiche bekommen, gegner keinen stich
+                return stitches.Count == 30; // all stitches (10 x 3 cards)
             }
-            // punkte über alle stiche und skat
             var score = Card.GetScore(stitches, skat);
-            if (Option.HasFlag(GameOption.Hand))
+            if (Option.HasFlag(GameOption.Schneider))
             {
                 return score >= 90;
             }
@@ -152,7 +151,7 @@ namespace MynaSkat.Core
                 gameValue.BidExceeded = true;
                 gameValue.IsWinner = false;
                 gameValue.Score *= -2;
-                gameValue.Description = $"Überreizt mit {bidValue}! Verloren! {GetGameAndOptionText()} : {calc} x -2 = {gameValue.Score}.";
+                gameValue.Description = $"Das Spiel wurde überreizt mit {bidValue}. {GetGameAndOptionText()} : {calc} x -2 = {gameValue.Score}.";
             }
             else
             {
@@ -221,11 +220,11 @@ namespace MynaSkat.Core
                 {
                     gameValue.Score *= -2;
                     gameValue.IsWinner = false;
-                    gameValue.Description = $"Verloren! {game}: {calc} x -2 = {gameValue.Score}.";
+                    gameValue.Description = $"{game}: {calc} x -2 = {gameValue.Score}.";
                 }
                 else
                 {
-                    gameValue.Description = $"Gewonnen! {game}: {calc} = {gameValue.Score}.";
+                    gameValue.Description = $"{game}: {calc} = {gameValue.Score}.";
                 }
             }
             return gameValue;
@@ -257,10 +256,6 @@ namespace MynaSkat.Core
             return mult * GetGrandOrColorBaseValue();
         }
         
-        /// <summary>
-        /// Returns the value for the Null game.
-        /// </summary>
-        /// <returns>game value</returns>
         public int GetNullBaseValue()
         {
             if (Type == GameType.Null)
@@ -282,10 +277,6 @@ namespace MynaSkat.Core
             return 0;
         }
 
-        /// <summary>
-        /// Returns the base value for a Grand or Color game.
-        /// </summary>
-        /// <returns>game base value</returns>
         public int GetGrandOrColorBaseValue()
         {
             if (Type == GameType.Grand)

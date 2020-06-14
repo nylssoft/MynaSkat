@@ -4,22 +4,20 @@ using System.Security.Cryptography;
 
 namespace MynaSkat.Core
 {
+    public enum ActionType { Bid, PassBid, HoldBid, PassHold, TakeSkat, StartGame, PlayHand, DoNotPlayHand };
+
     public class PlayerStatus
     {
-        public string Status { get; set; } = "";
-
-        public string Game { get; set; } = "";
+        public string Header { get; set; } = "";
 
         public List<string> ActionLabels { get; set; } = new List<string>();
 
-        public List<PlayerAction> Actions { get; set; } = new List<PlayerAction>();
+        public List<ActionType> ActionTypes { get; set; } = new List<ActionType>();
     };
-
-    public enum PlayerAction { Bid, PassBid, HoldBid, PassHold, TakeSkat, StartGame, PlayHand, DoNotPlayHand };
 
     public class SkatTable
     {
-        public int TotalGames { get; set; } = 0;
+        public int GameCounter { get; set; } = 1;
 
         public List<Player> Players { get; set; } = new List<Player>();
 
@@ -75,9 +73,9 @@ namespace MynaSkat.Core
 
         public SkatTable(string player1, string player2, string player3)
         {
-            Players.Add(new Player(player1, BidOrder.Deal));
-            Players.Add(new Player(player2, BidOrder.Response));
-            Players.Add(new Player(player3, BidOrder.Bid));
+            Players.Add(new Player(player1, PlayerPosition.Rearhand));
+            Players.Add(new Player(player2, PlayerPosition.Forehand));
+            Players.Add(new Player(player3, PlayerPosition.Middlehand));
             using (var rng = new RNGCryptoServiceProvider())
             {
                 var deck = Card.GenerateDeck();
@@ -116,24 +114,25 @@ namespace MynaSkat.Core
 
         public void StartNewRound()
         {
+            GameCounter += 1;
             foreach (var p in Players)
             {
                 p.Stitches.Clear();
                 p.Cards.Clear();
                 p.Game = new Game(GameType.Grand);
-                switch (p.BidOrder)
+                switch (p.Position)
                 {
 
-                    case BidOrder.Bid:
-                        p.BidOrder = BidOrder.Response;
+                    case PlayerPosition.Middlehand:
+                        p.Position = PlayerPosition.Forehand;
                         p.BidStatus = BidStatus.Accept;
                         break;
-                    case BidOrder.Deal:
-                        p.BidOrder = BidOrder.Bid;
+                    case PlayerPosition.Rearhand:
+                        p.Position = PlayerPosition.Middlehand;
                         p.BidStatus = BidStatus.Bid;
                         break;
-                    case BidOrder.Response:
-                        p.BidOrder = BidOrder.Deal;
+                    case PlayerPosition.Forehand:
+                        p.Position = PlayerPosition.Rearhand;
                         p.BidStatus = BidStatus.Wait;
                         break;
                     default:
@@ -170,7 +169,7 @@ namespace MynaSkat.Core
             }
         }
 
-        public int GetPlayerIdx(Player player)
+        private int GetPlayerIdx(Player player)
         {
             int idx = 0;
             foreach(var p in Players)
@@ -297,7 +296,6 @@ namespace MynaSkat.Core
             var game = GamePlayer.Game;
             GameValue = game.GetGameValue(MatadorsJackStraight, GamePlayer.Stitches, Skat, CurrentBidValue);
             GamePlayer.Score += GameValue.Score;
-            TotalGames += 1;
         }
 
         public bool CanViewLastStitch(Player player)
@@ -367,6 +365,11 @@ namespace MynaSkat.Core
             }
         }
 
+        public bool CanStartNewGame()
+        {
+            return GameStarted && GamePlayer != null && GamePlayer.Cards.Count == 0 && Stitch.Count == 0;
+        }
+
         public void StartGame(Player player)
         {
             List<Card> skat = null;
@@ -383,7 +386,7 @@ namespace MynaSkat.Core
             foreach (var p in Players)
             {
                 p.Game = player.Game; // same card sort order for everybody
-                if (p.BidOrder == BidOrder.Response)
+                if (p.Position == PlayerPosition.Forehand)
                 {
                     CurrentPlayer = p;
                 }
@@ -420,93 +423,136 @@ namespace MynaSkat.Core
             return activePlayer;
         }
 
-        public PlayerStatus GetPlayerStatus(Player viewPlayer, Player player)
+        public Player GetBidPlayer(BidStatus bidStatus)
+        {
+            foreach (var p in Players)
+            {
+                if (p.BidStatus == bidStatus)
+                {
+                    return p;
+                }
+            }
+            return null;
+        }
+
+        public PlayerStatus GetPlayerStatus(Player player)
         {
             var ret = new PlayerStatus();
-            // Reizen
+            // Bidding
             if (GamePlayer == null)
             {
                 if (player.BidStatus == BidStatus.Wait)
                 {
-                    ret.Status = "Wartet.";
+                    ret.Header += $"Du wartest bis du zum Reizen an der Reihe bist. ";
+                    ret.Header += $"{GetBidPlayer(BidStatus.Bid).Name} sagt {GetBidPlayer(BidStatus.Accept).Name}. ";
+                    if (CurrentBidValue > 0)
+                    {
+                        ret.Header += $"Es sind aktuell {CurrentBidValue} angesagt. ";
+                    }
                 }
                 else if (player.BidStatus == BidStatus.Accept && !BidSaid)
                 {
-                    ret.Status = "Hört auf Reizansage.";
+                    ret.Header += $"Du wartest auf eine Reizansage von {GetBidPlayer(BidStatus.Bid).Name}. ";
                     if (CurrentBidValue > 0)
                     {
-                        ret.Status += $" {CurrentBidValue} angesagt.";
+                        ret.Header += $"Es sind aktuell {CurrentBidValue} angesagt. ";
                     }
                 }
                 else if (player.BidStatus == BidStatus.Accept && BidSaid)
                 {
-                    ret.Status = "Antworten!";
-                    if (viewPlayer == player)
-                    {
-                        ret.ActionLabels.Add($"{CurrentBidValue} halten");
-                        ret.ActionLabels.Add("Weg");
-                        ret.Actions.Add(PlayerAction.HoldBid);
-                        ret.Actions.Add(PlayerAction.PassHold);
-                    }
+                    ret.Header += $"Du musst die Reizanfrage beantworten. ";
+                    ret.Header += $"{GetBidPlayer(BidStatus.Bid).Name} hat {CurrentBidValue} gesagt. ";
+                    ret.ActionLabels.Add($"{CurrentBidValue} halten");
+                    ret.ActionLabels.Add("Weg");
+                    ret.ActionTypes.Add(ActionType.HoldBid);
+                    ret.ActionTypes.Add(ActionType.PassHold);
                 }
                 else if (player.BidStatus == BidStatus.Bid && !BidSaid)
                 {
-                    ret.Status = "Reizen!";
-                    if (viewPlayer == player)
+                    var acceptPlayer = GetBidPlayer(BidStatus.Accept);
+                    if (acceptPlayer == null)
                     {
-                        ret.ActionLabels.Add($"{NextBidValue} sagen");
-                        ret.ActionLabels.Add("Weg");
-                        ret.Actions.Add(PlayerAction.Bid);
-                        ret.Actions.Add(PlayerAction.PassBid);
+                        ret.Header += "Alle Spieler haben gepasst. Du kannst jetzt eine Reizansage abgeben oder auch passen. ";
                     }
+                    else
+                    {
+                        ret.Header += $"Du musst eine Reizansage abgeben für {acceptPlayer.Name}. ";
+                        if (CurrentBidValue > 0)
+                        {
+                            ret.Header += $"Es sind aktuell {CurrentBidValue} angesagt. ";
+                        }
+                    }
+                    ret.ActionLabels.Add($"{NextBidValue} sagen");
+                    ret.ActionLabels.Add("Weg");
+                    ret.ActionTypes.Add(ActionType.Bid);
+                    ret.ActionTypes.Add(ActionType.PassBid);
                 }
                 else if (player.BidStatus == BidStatus.Bid && BidSaid)
                 {
-                    ret.Status = $"Wartet auf Antwort. {CurrentBidValue} gesagt.";
+                    ret.Header += $"Du wartest auf eine Antwort von {GetBidPlayer(BidStatus.Accept).Name}. Du hast {CurrentBidValue} angesagt. ";
                 }
                 else if (player.BidStatus == BidStatus.Pass)
                 {
-                    ret.Status = "Weg.";
+                    ret.Header += "Du hast beim Reizen gepasst. ";
+                    var acceptPlayer = GetBidPlayer(BidStatus.Accept);
+                    if (acceptPlayer != null)
+                    {
+                        ret.Header += $"{GetBidPlayer(BidStatus.Bid).Name} sagt {acceptPlayer.Name}. ";
+                    }
+                    else
+                    {
+                        ret.Header += $"{GetBidPlayer(BidStatus.Bid).Name} könnte spielen. ";
+                    }
+                    if (CurrentBidValue > 0)
+                    {
+                        ret.Header += $"Es sind aktuell {CurrentBidValue} angesagt. ";
+                    }
                 }
             }
             // Game selection
             else if (!GameStarted)
             {
-                ret.Status = $"Wartet auf Spielansage von {GamePlayer.Name}.";
                 if (player == GamePlayer)
                 {
                     if (Skat.Count < 2)
                     {
-                        ret.Status = "Drücken!";
+                        ret.Header += "Du musst 2 Karten drücken. ";
+                        ret.Header += $"Du hast {player.Game.GetGameAndOptionText()} als Spiel ausgewählt. ";
+                        ret.Header += $"Du hast {CurrentBidValue} gesagt. ";
                     }
                     else if (!SkatTaken && !player.Game.Option.HasFlag(GameOption.Hand))
                     {
-                        ret.Status = "Skat nehmen oder Hand ansagen!";
-                        if (viewPlayer == player)
-                        {
-                            ret.ActionLabels.Add("Skat nehmen");
-                            ret.ActionLabels.Add("Hand spielen");
-                            ret.Actions.Add(PlayerAction.TakeSkat);
-                            ret.Actions.Add(PlayerAction.PlayHand);
-                            ret.Game += $"Du wirst {viewPlayer.Game.GetGameAndOptionText()} spielen. ";
-                        }
+                        ret.Header += "Du kannst den Skat nehmen oder Hand ansagen. ";
+                        ret.Header += $"Du hast {player.Game.GetGameAndOptionText()} als Spiel ausgewählt. ";
+                        ret.Header += $"Du hast {CurrentBidValue} gesagt. ";
+                        ret.ActionLabels.Add("Skat nehmen");
+                        ret.ActionLabels.Add("Hand spielen");
+                        ret.ActionTypes.Add(ActionType.TakeSkat);
+                        ret.ActionTypes.Add(ActionType.PlayHand);
                     }
                     else
                     {
-                        ret.Status = "Spiel ansagen oder drücken!";
-                        if (viewPlayer == player)
+                        ret.Header += "Du kannst jetzt ";
+                        ret.ActionLabels.Add("Los geht's!");
+                        ret.ActionTypes.Add(ActionType.StartGame);
+                        if (player.Game.Option.HasFlag(GameOption.Hand))
                         {
-                            ret.ActionLabels.Add("Los geht's!");
-                            ret.Actions.Add(PlayerAction.StartGame);
-                            if (player.Game.Option.HasFlag(GameOption.Hand))
-                            {
-                                ret.ActionLabels.Add("Kein Handspiel!");
-                                ret.Actions.Add(PlayerAction.DoNotPlayHand);
-                            }
-                            ret.Game += $"Du wirst {viewPlayer.Game.GetGameAndOptionText()} spielen. ";
+                            ret.ActionLabels.Add("Kein Handspiel!");
+                            ret.ActionTypes.Add(ActionType.DoNotPlayHand);
+                            ret.Header += "das Handspiel zurücknehmen ";
                         }
+                        else
+                        {
+                            ret.Header += "den Skat ändern ";
+                        }
+                        ret.Header += "oder das Spiel starten. ";
+                        ret.Header += $"Du hast {player.Game.GetGameAndOptionText()} als Spiel ausgewählt. ";
+                        ret.Header += $"Du hast {CurrentBidValue} gesagt. ";
                     }
-                    ret.Status += $" Du hast {CurrentBidValue} angesagt.";
+                }
+                else
+                {
+                    ret.Header += $"Du wartest auf die Spielansage von {GamePlayer.Name}. Es wurden {CurrentBidValue} angesagt. ";
                 }
             }
             // Game started
@@ -515,17 +561,30 @@ namespace MynaSkat.Core
                 // Game ended
                 if (player.Cards.Count == 0 && Stitch.Count == 0)
                 {
-                    ret.Status = "Spiel beendet.";
-                    List<Card> skat = null;
-                    if (player == GamePlayer && player.Game.Type != GameType.Null)
-                    {
-                        skat = Skat;
-                    }
-                    ret.Game += $"{Card.GetScore(player.Stitches, skat)} Augen. ";
+                    ret.Header += "Das Spiel ist beendet. ";
+                    // exclude Skat for Null games
+                    ret.Header += $"Du hast {GetScore(player)} Augen. ";
+                    var next1 = GetNextPlayer(player);
+                    var next2 = GetNextPlayer(next1);
+                    ret.Header += $"{next1.Name} hat {GetScore(next1)} Augen. ";
+                    ret.Header += $"{next2.Name} hat {GetScore(next2)} Augen. ";
                     if (player == GamePlayer)
                     {
-                        ret.Game += $"{GameValue.Description} ";
+                        ret.Header += "Du hast gespielt und ";
                     }
+                    else
+                    {
+                        ret.Header += $"{GamePlayer.Name} hat gespielt und ";
+                    }
+                    if (GameValue.IsWinner)
+                    {
+                        ret.Header += "gewonnen. ";
+                    }
+                    else
+                    {
+                        ret.Header += "verloren. ";
+                    }
+                    ret.Header += $"{GameValue.Description} ";
                 }
                 // Game in progress
                 else
@@ -534,68 +593,58 @@ namespace MynaSkat.Core
                     {
                         if (Stitch.Count == 3)
                         {
-                            ret.Status = "Stich einsammeln!";
+                            ret.Header += "Du musst den Stich einsammeln. ";
                         }
                         else
                         {
-                            ret.Status = "Ausspielen!";
+                            ret.Header += "Du musst eine Karte ausspielen. ";
                         }
                     }
                     else
                     {
-                        ret.Status = $"Wartet auf {CurrentPlayer.Name}. ";
+                        ret.Header += $"Du wartest bis {CurrentPlayer.Name} eine Karte gespielt hat. ";
                     }
                     if (player == GamePlayer)
                     {
+                        ret.Header += $"Du spielst {GamePlayer.Game.GetGameAndOptionText()} mit {CurrentBidValue}. ";
                         if (player == CurrentPlayer && BidExceeded)
                         {
-                            ret.Game += "Überreizt! ";
+                            ret.Header += "Du hast dich überreizt. ";
                         }
-                        ret.Game += $"Spielt {viewPlayer.Game.GetGameAndOptionText()}. ";
-                        ret.Game += $"Hat {CurrentBidValue} gesagt. ";
                     }
-                }
-            }
-            if (!GameStarted)
-            {
-                if (player.BidOrder == BidOrder.Deal)
-                {
-                    ret.Status += " Hat gegeben.";
-                }
-                else if (player.BidOrder == BidOrder.Response)
-                {
-                    ret.Status += " Kommt aus.";
-                }
-            }
-            if (TotalGames > 0)
-            {
-                ret.Game += $"{player.Score} Punkte.";
-                if (TotalGames > 1)
-                {
-                    ret.Game += $" {TotalGames} Spiele.";
-                }
-                else
-                {
-                    ret.Game += $" {TotalGames} Spiel.";
+                    else
+                    {
+                        ret.Header += $"{GamePlayer.Name} spielt {GamePlayer.Game.GetGameAndOptionText()} mit {CurrentBidValue}. ";
+                    }
                 }
             }
             return ret;
         }
 
-        public void PerformPlayerAction(Player player, PlayerAction playerAction)
+        public int GetScore(Player player)
         {
-            switch (playerAction)
+            List<Card> skat = null;
+            if (player == GamePlayer && player.Game.Type != GameType.Null)
             {
-                case PlayerAction.TakeSkat:
+                skat = Skat;
+            }
+            return Card.GetScore(player.Stitches, skat);
+        }
+
+        public void PerformPlayerAction(Player player, ActionType actionType)
+        {
+            switch (actionType)
+            {
+                case ActionType.TakeSkat:
                     SkatTaken = true;
                     break;
-                case PlayerAction.PlayHand:
+                case ActionType.PlayHand:
                     SetGameOption(player, player.Game.Option | GameOption.Hand);
                     break;
-                case PlayerAction.StartGame:
+                case ActionType.StartGame:
                     StartGame(player);
                     break;
-                case PlayerAction.DoNotPlayHand:
+                case ActionType.DoNotPlayHand:
                     var gameOption = player.Game.Option & ~GameOption.Hand;
                     if (player.Game.Type != GameType.Null)
                     {
@@ -603,15 +652,15 @@ namespace MynaSkat.Core
                     }
                     SetGameOption(player, gameOption);
                     break;
-                case PlayerAction.Bid:
+                case ActionType.Bid:
                     BidSaid = true;
                     MoveNextBidValue();
                     break;
-                case PlayerAction.PassBid:
+                case ActionType.PassBid:
                     player.BidStatus = BidStatus.Pass;
                     foreach (var p in Players)
                     {
-                        if (p.BidOrder == BidOrder.Deal && p.BidStatus != BidStatus.Pass)
+                        if (p.Position == PlayerPosition.Rearhand && p.BidStatus != BidStatus.Pass)
                         {
                             p.BidStatus = BidStatus.Bid;
                             break;
@@ -619,19 +668,19 @@ namespace MynaSkat.Core
                     }
                     BidSaid = false;
                     break;
-                case PlayerAction.HoldBid:
+                case ActionType.HoldBid:
                     BidSaid = false;
                     break;
-                case PlayerAction.PassHold:
+                case ActionType.PassHold:
                     BidSaid = false;
                     player.BidStatus = BidStatus.Pass;
                     foreach (var p in Players)
                     {
-                        if (p.BidOrder == BidOrder.Deal && p.BidStatus != BidStatus.Pass) // weitersagen
+                        if (p.Position == PlayerPosition.Rearhand && p.BidStatus != BidStatus.Pass) // weitersagen
                         {
                             p.BidStatus = BidStatus.Bid;
                         }
-                        else if (p.BidOrder == BidOrder.Bid && p.BidStatus != BidStatus.Pass) // hoeren
+                        else if (p.Position == PlayerPosition.Middlehand && p.BidStatus != BidStatus.Pass) // hoeren
                         {
                             p.BidStatus = BidStatus.Accept;
                         }
@@ -640,9 +689,9 @@ namespace MynaSkat.Core
                 default:
                     break;
             }
-            if (playerAction == PlayerAction.PassBid ||
-                playerAction == PlayerAction.PassHold ||
-                playerAction == PlayerAction.Bid)
+            if (actionType == ActionType.PassBid ||
+                actionType == ActionType.PassHold ||
+                actionType == ActionType.Bid)
             {
                 // find if all player have given up
                 Player gamePlayer = null;
@@ -659,13 +708,12 @@ namespace MynaSkat.Core
                 // all gave up
                 if (cntPassen == 3)
                 {
-                    TotalGames += 1;
                     StartNewRound();
                 }
                 // two player gave up, remaing playing is the game player
                 else if (gamePlayer != null && cntPassen == 2)
                 {
-                    if (gamePlayer.BidOrder == BidOrder.Response && CurrentBidValue == 0)
+                    if (gamePlayer.Position == PlayerPosition.Forehand && CurrentBidValue == 0)
                     {
                         gamePlayer.BidStatus = BidStatus.Bid;
                     }
@@ -679,14 +727,16 @@ namespace MynaSkat.Core
             }
         }
 
+        public bool CanCollectStitch(Player player)
+        {
+            return GameStarted && CurrentPlayer == player && Stitch.Count == 3;
+        }
+
         public void CollectStitch(Player player)
         {
-            if (GameStarted && CurrentPlayer == player && Stitch.Count >= 3)
-            {
-                LastStitch.Clear();
-                LastStitch.AddRange(Stitch);
-                Stitch.Clear();
-            }
+            LastStitch.Clear();
+            LastStitch.AddRange(Stitch);
+            Stitch.Clear();
             if (CurrentPlayer == player &&
                 GamePlayer == player &&
                 player.Game.Type == GameType.Null && player.Stitches.Any())
@@ -701,7 +751,6 @@ namespace MynaSkat.Core
                 var game = GamePlayer.Game;
                 GameValue = game.GetGameValue(MatadorsJackStraight, GamePlayer.Stitches, Skat, CurrentBidValue);
                 GamePlayer.Score += GameValue.Score;
-                TotalGames += 1;
             }
         }
 
@@ -721,12 +770,12 @@ namespace MynaSkat.Core
                 if (Stitch.Count == 3)
                 {
                     CollectStitch(player);
-                    if (player.Cards.Count == 0) // @TODO: game ended
+                    if (player.Cards.Count == 0)
                     {
-                        card = null;
+                        return; // game ended
                     }
                 }
-                if (card != null && IsValidForStitch(card))
+                if (IsValidForStitch(card))
                 {
                     player.Cards.Remove(card);
                     CurrentPlayer = GetNextPlayer(player);

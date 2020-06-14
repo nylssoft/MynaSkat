@@ -8,7 +8,7 @@
         Background="Green"
         Loaded="Window_Loaded" SizeChanged="Window_SizeChanged"
         mc:Ignorable="d"
-        Title="Myna Skat" Height="770" Width="1000" MinHeight="770" MinWidth="430" >
+        Title="Myna Skat" Height="740" Width="1000" MinHeight="740" MinWidth="430" >
     <Window.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="LightYellow" />
@@ -30,7 +30,7 @@
     </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="210" />
+            <RowDefinition Height="120" />
             <RowDefinition Height="140" />
             <RowDefinition Height="*" />
             <RowDefinition Height="140" />
@@ -41,55 +41,31 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid Grid.Row="0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="40" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="40" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="40" />
-                <RowDefinition Height="30" />
-                <RowDefinition Height="100" />
-            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="160" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <RadioButton GroupName="player" Margin="0,0,60,0" Grid.Row="0" Grid.Column="0" x:Name="radioButtonPlayer1" Content="Player 1" VerticalAlignment="Center" Click="RadioButtonPlayer_Click"/>
-            <TextBlock Margin="0,0,5,0" Grid.Row="0" Grid.Column="1" x:Name="textBlockStatus1" Text="Status1" VerticalAlignment="Center"/>
-            <Button Grid.Row="0" Grid.Column="3" x:Name="buttonPlayer1Action1" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonAction_Click"/>
-            <Button Grid.Row="0" Grid.Column="4" x:Name="buttonPlayer1Action2" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonAction_Click"/>
-            <TextBlock Foreground="Aqua" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5" x:Name="textBlockGame1" VerticalAlignment="Center" />
-
-            <RadioButton GroupName="player" Margin="0,0,60,0" Grid.Row="2" Grid.Column="0" x:Name="radioButtonPlayer2" Content="Player 2" VerticalAlignment="Center" Click="RadioButtonPlayer_Click"/>
-            <TextBlock Margin="0,0,5,0" Grid.Row="2" Grid.Column="1" x:Name="textBlockStatus2" Text="Status1" VerticalAlignment="Center"/>
-            <Button Grid.Row="2" Grid.Column="3" x:Name="buttonPlayer2Action1" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonAction_Click"/>
-            <Button Grid.Row="2" Grid.Column="4" x:Name="buttonPlayer2Action2" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonAction_Click"/>
-            <TextBlock Foreground="Aqua" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="5" x:Name="textBlockGame2" VerticalAlignment="Center" />
-
-            <RadioButton GroupName="player" Margin="0,0,60,0" Grid.Row="4" Grid.Column="0" x:Name="radioButtonPlayer3" Content="Player 3" VerticalAlignment="Center" Click="RadioButtonPlayer_Click"/>
-            <TextBlock Margin="0,0,5,0" Grid.Row="4" Grid.Column="1" x:Name="textBlockStatus3" Text="Status1" VerticalAlignment="Center"/>
-            <Button Grid.Row="4" Grid.Column="3" x:Name="buttonPlayer3Action1" Width="140" Margin="0,5,0,5" Content="18!" Click="ButtonAction_Click"/>
-            <Button Grid.Row="4" Grid.Column="4" x:Name="buttonPlayer3Action2" Width="140" Margin="0,5,0,5" Content="Weg" Click="ButtonAction_Click"/>
-            <TextBlock Foreground="Aqua" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="5" x:Name="textBlockGame3" VerticalAlignment="Center" />
+            <TextBlock x:Name="textBlockStatus" Grid.Column="0" TextWrapping="Wrap" />
+            <StackPanel x:Name="stackPanelPlayers" Grid.Column="1" />
         </Grid>
         <Grid x:Name="gridOuvertCards" Grid.Row="1"/>
         <Grid x:Name="gridSkat" Grid.Row="2" HorizontalAlignment="Center" Width="240"/>
         <Grid x:Name="gridStitch" Grid.Row="2" HorizontalAlignment="Center" Width="360" Visibility="Hidden"/>
-        <Grid x:Name="gridLastStitch" Grid.Row="2" HorizontalAlignment="Right" Width="200" Visibility="Hidden" />
+        <Grid x:Name="gridLastStitch" Grid.Row="2" HorizontalAlignment="Center" Width="360" Visibility="Hidden" />
         <Grid x:Name="gridPlayCards" Grid.Row="3" />
-        <Grid Grid.Row="4">
+        <Grid x:Name="gridButtons" Grid.Row="4"/>
+        <Grid Grid.Row="5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="120" />
-                <ColumnDefinition Width="120" />
-                <ColumnDefinition Width="120" />
-                <ColumnDefinition Width="120" />
-                <ColumnDefinition Width="120" />
-                <ColumnDefinition Width="120" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="75" />
+                <ColumnDefinition Width="60" />
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition Width="50" />
+                <ColumnDefinition Width="60" />
+                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="90" />
+                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="110" />
+                <ColumnDefinition Width="90" />
             </Grid.ColumnDefinitions>
             <RadioButton Grid.Column="0" GroupName="Game" x:Name="radioButtonGrand" Content="Grand" VerticalAlignment="Center" Click="RadioButtonGameType_Click"/>
             <RadioButton Grid.Column="1" GroupName="Game" x:Name="radioButtonNull" Content="Null" VerticalAlignment="Center" Click="RadioButtonGameType_Click" />
@@ -97,22 +73,10 @@
             <RadioButton Grid.Column="3" GroupName="Game" x:Name="radioButtonSpades" Content="Pik" VerticalAlignment="Center" Click="RadioButtonGameType_Click"/>
             <RadioButton Grid.Column="4" GroupName="Game" x:Name="radioButtonHearts" Content="Herz" VerticalAlignment="Center" Click="RadioButtonGameType_Click"/>
             <RadioButton Grid.Column="5" GroupName="Game" x:Name="radioButtonDiamonds" Content="Karo" VerticalAlignment="Center" Click="RadioButtonGameType_Click"/>
-            <CheckBox Grid.Column="6" x:Name="checkBoxComputer" Content="Computer Gegner" VerticalAlignment="Center" HorizontalAlignment="Right"/>
-        </Grid>
-        <Grid Grid.Row="5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="120" />
-                <ColumnDefinition Width="120" />
-                <ColumnDefinition Width="120" />
-                <ColumnDefinition Width="120" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <CheckBox Grid.Column="0" x:Name="checkBoxOuvert" Content="Ouvert" VerticalAlignment="Center" Click="CheckBoxOption_Click"/>
-            <CheckBox Grid.Column="1" x:Name="checkBoxHand" Content="Hand" VerticalAlignment="Center" Click="CheckBoxOption_Click"/>
-            <CheckBox Grid.Column="2" x:Name="checkBoxSchneider" Content="Schneider" VerticalAlignment="Center" Click="CheckBoxOption_Click"/>
-            <CheckBox Grid.Column="3" x:Name="checkBoxSchwarz" Content="Schwarz" VerticalAlignment="Center" Click="CheckBoxOption_Click"/>
-            <Button Grid.Column="5" x:Name="buttonGiveUp" Content="Aufgeben" Width="120" Height="35" HorizontalAlignment="Right" Click="ButtonGiveUp_Click" />
-            <Button Grid.Column="5" x:Name="buttonNewGame" Content="Neues Spiel" Width="120" Height="35" HorizontalAlignment="Right" Click="Button_NewGame"/>
+            <CheckBox Grid.Column="6" x:Name="checkBoxOuvert" Content="Ouvert" VerticalAlignment="Center" Click="CheckBoxOption_Click"/>
+            <CheckBox Grid.Column="7" x:Name="checkBoxHand" Content="Hand" VerticalAlignment="Center" Click="CheckBoxOption_Click"/>
+            <CheckBox Grid.Column="8" x:Name="checkBoxSchneider" Content="Schneider" VerticalAlignment="Center" Click="CheckBoxOption_Click"/>
+            <CheckBox Grid.Column="9" x:Name="checkBoxSchwarz" Content="Schwarz" VerticalAlignment="Center" Click="CheckBoxOption_Click"/>
         </Grid>
     </Grid>
 </Window>
