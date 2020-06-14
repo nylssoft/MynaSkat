@@ -470,12 +470,12 @@ namespace MynaSkat
             if (playerAction != null)
             {
                 skatTable.PerformPlayerAction(player, playerAction.Value);
-                lastCardPlayed = DateTime.Now;
             }
             if (!computerPlay)
             {
                 SelectActivePlayer();
             }
+            lastCardPlayed = DateTime.Now;
             UpdateStatus();
         }
 
@@ -496,6 +496,7 @@ namespace MynaSkat
             var player = GetPlayer();
             if (player == null) return;
             showLastStitch = !showLastStitch;
+            lastCardPlayed = DateTime.Now;
             UpdateStatus();
         }
 
@@ -504,6 +505,7 @@ namespace MynaSkat
             var player = GetPlayer();
             if (player == null) return;
             computerPlay = !computerPlay;
+            lastCardPlayed = DateTime.Now;
             UpdateStatus();
         }
 
@@ -514,6 +516,7 @@ namespace MynaSkat
             if (skatTable.CanCollectStitch(player))
             {
                 skatTable.CollectStitch(player);
+                lastCardPlayed = DateTime.Now;
                 UpdateStatus();
             }
         }
@@ -524,11 +527,11 @@ namespace MynaSkat
             var card = image?.Tag as Card;
             var player = GetPlayer();
             if (player == null || image == null || card == null) return;
-            lastCardPlayed = DateTime.Now;
             if (skatTable.CanPickupSkat(player))
             {
                 skatTable.PickupSkat(player, card);
             }
+            lastCardPlayed = DateTime.Now;
             UpdateStatus();
         }
 
@@ -538,12 +541,12 @@ namespace MynaSkat
             var card = image?.Tag as Card;
             var player = GetPlayer();
             if (player == null || image == null || card == null || showLastStitch) return;
-            lastCardPlayed = DateTime.Now;
             skatTable.PlayCard(player, card);
             if (!computerPlay && player != skatTable.CurrentPlayer)
             {
                 SelectActivePlayer();
             }
+            lastCardPlayed = DateTime.Now;
             UpdateStatus();
         }
 
@@ -554,6 +557,7 @@ namespace MynaSkat
             if (skatTable.CanCollectStitch(player))
             {
                 skatTable.CollectStitch(player);
+                lastCardPlayed = DateTime.Now;
                 UpdateStatus();
             }
         }
