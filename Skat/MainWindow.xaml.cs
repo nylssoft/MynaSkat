@@ -371,6 +371,10 @@ namespace MynaSkat
                         image.MouseDown += mouseDown;
                     }
                     image.Tag = card;
+                    if (!showBack)
+                    {
+                        image.ToolTip = card.ToString();
+                    }
                     p.Children.Add(image);
                 }
                 grid.Children.Add(p);
