@@ -8,7 +8,7 @@
         Background="Green"
         Loaded="Window_Loaded" SizeChanged="Window_SizeChanged"
         mc:Ignorable="d"
-        Title="Myna Skat" Height="740" Width="1000" MinHeight="740" MinWidth="430" >
+        Title="Myna Skat" Height="740" Width="1100" MinHeight="740" MinWidth="430" >
     <Window.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="LightYellow" />
@@ -33,28 +33,47 @@
             <RowDefinition Height="120" />
             <RowDefinition Height="140" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="40" />
             <RowDefinition Height="140" />
             <RowDefinition Height="40" />
             <RowDefinition Height="40" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="40" />
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="40" />
         </Grid.ColumnDefinitions>
-        <Grid Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <Grid Grid.Row="0" Grid.Column="1">
             <TextBlock x:Name="textBlockStatus" Grid.Column="0" TextWrapping="Wrap" />
-            <StackPanel x:Name="stackPanelPlayers" Grid.Column="1" />
         </Grid>
-        <Grid x:Name="gridOuvertCards" Grid.Row="1"/>
-        <Grid x:Name="gridSkat" Grid.Row="2" HorizontalAlignment="Center" Width="240"/>
-        <Grid x:Name="gridStitch" Grid.Row="2" HorizontalAlignment="Center" Width="360" Visibility="Hidden"/>
-        <Grid x:Name="gridLastStitch" Grid.Row="2" HorizontalAlignment="Center" Width="360" Visibility="Hidden" />
-        <Grid x:Name="gridPlayCards" Grid.Row="3" />
-        <Grid x:Name="gridButtons" Grid.Row="4"/>
-        <Grid Grid.Row="5">
+        <Grid x:Name="gridOuvertCards" Grid.Row="1" Grid.Column="1"/>
+        <Grid x:Name="gridSkat" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Center" Width="240"/>
+        <Grid x:Name="gridStitch" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Center" Width="360" Visibility="Hidden"/>
+        <Grid x:Name="gridLastStitch" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Center" Width="360" Visibility="Hidden" />
+        <Grid x:Name="gridPlayCards" Grid.Row="4" Grid.Column="1" />
+        <TextBlock x:Name="textBlockLeftPlayer" Grid.Row="1" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Height="40" Margin="40,0,0,0" VerticalAlignment="Top" MouseLeftButtonDown="TextBlockPlayer_MouseLeftButtonDown">
+            Left Player Info Text 1234567890 1234567890 12345
+            <TextBlock.RenderTransform>
+                <TransformGroup>
+                    <RotateTransform Angle="90"/>
+                    <TranslateTransform X="-20"/>
+                </TransformGroup>
+            </TextBlock.RenderTransform>
+        </TextBlock>
+        <TextBlock x:Name="textBlockRightPlayer" Grid.Row="0" Grid.RowSpan="4" Grid.Column="2" Height="40" Margin="-400,0,0,0" VerticalAlignment="Bottom" MouseLeftButtonDown="TextBlockPlayer_MouseLeftButtonDown">
+            Right Player Info Text 1234567890 1234567890 12345
+            <TextBlock.RenderTransform>
+                <TransformGroup>
+                    <RotateTransform Angle="270"/>
+                    <TranslateTransform X="420"/>
+                </TransformGroup>
+            </TextBlock.RenderTransform>
+        </TextBlock>
+        <TextBlock x:Name="textBlockViewPlayer" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" MouseLeftButtonDown="TextBlockPlayer_MouseLeftButtonDown">
+            Current Player Info 1234567890 1234567890 12345
+        </TextBlock>
+        <Grid x:Name="gridButtons" Grid.Row="5" Grid.Column="1" />
+        <Grid Grid.Row="6" Grid.Column="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="75" />
                 <ColumnDefinition Width="60" />

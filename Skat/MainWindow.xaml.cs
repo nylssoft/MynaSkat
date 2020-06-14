@@ -19,6 +19,7 @@ namespace MynaSkat
         private bool showLastStitch = false;
         private bool computerPlay = false;
         private DateTime lastCardPlayed = DateTime.Now;
+        private Player selectedPlayer = null;
 
         public MainWindow()
         {
@@ -41,14 +42,7 @@ namespace MynaSkat
 
         private void SelectActivePlayer()
         {
-            foreach (var child in stackPanelPlayers.Children)
-            {
-                var radioButton = child as RadioButton;
-                if (radioButton?.Tag == skatTable.GetActivePlayer())
-                {
-                    radioButton.IsChecked = true;
-                }
-            }
+            selectedPlayer = skatTable.GetActivePlayer();
         }
 
         private void UpdateStatus()
@@ -118,19 +112,11 @@ namespace MynaSkat
         private Player GetPlayer()
         {
             if (skatTable == null || skatTable.Players.Count < 3) return null;
-            if (stackPanelPlayers.Children.Count == 0)
+            if (selectedPlayer == null)
             {
                 return skatTable.GetActivePlayer();
             }
-            foreach (var child in stackPanelPlayers.Children)
-            {
-                var radioButton = child as RadioButton;
-                if (radioButton?.IsChecked == true)
-                {
-                    return radioButton.Tag as Player;
-                }
-            }
-            return null;
+            return selectedPlayer;
         }
 
         private GameType GetGameType()
@@ -175,18 +161,10 @@ namespace MynaSkat
 
         private void RenderPlayers(Player player)
         {
-            bool first = true;
-            stackPanelPlayers.Children.Clear();
-            var tb = new TextBlock()
-            {
-                Text = $"Spiel {skatTable.GameCounter}",
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 5),
-                Foreground = Brushes.DarkBlue
-            };
-            stackPanelPlayers.Children.Add(tb);
             var players = new List<Player>(skatTable.Players);
             players.Sort((p1, p2) => p1.Position.CompareTo(p2.Position));
+            Player leftPlayer = skatTable.GetNextPlayer(player);
+            Player rightPlayer = skatTable.GetNextPlayer(leftPlayer);
             foreach (var p in players)
             {
                 var txt = $"{p.Name}, {p.GetPositionText()}";
@@ -195,27 +173,26 @@ namespace MynaSkat
                     txt += $", {p.Game.GetGameText()}";
                 }
                 txt += $", {p.Score} Punkte";
-                var radioButton = new RadioButton { Content = txt, GroupName = "player", VerticalAlignment = VerticalAlignment.Center };
-                radioButton.Click += RadioButtonPlayer_Click;
-                radioButton.Tag = p;
                 if (player == p)
                 {
-                    radioButton.IsChecked = true;
+                    txt += $", Spiel {skatTable.GameCounter}";
                 }
-                if (skatTable.GetActivePlayer() == p)
+                TextBlock tb;
+                if (player == p)
                 {
-                    radioButton.Foreground = Brushes.Aqua;
+                    tb = textBlockViewPlayer;
                 }
-                if (!first)
+                else if (leftPlayer == p)
                 {
-                    radioButton.Margin = new Thickness(0, 5, 0, 0);
+                    tb = textBlockLeftPlayer;
                 }
-                if (computerPlay)
+                else // if (rightPlayer == p)
                 {
-                    radioButton.IsEnabled = false;
+                    tb = textBlockRightPlayer;
                 }
-                first = false;
-                stackPanelPlayers.Children.Add(radioButton);
+                tb.Text = txt;
+                tb.Foreground = !skatTable.GameEnded && skatTable.GetActivePlayer() == p ? Brushes.Aqua : Brushes.White;
+                tb.Tag = p;
             }
         }
 
@@ -427,7 +404,7 @@ namespace MynaSkat
                 }
                 else if (skatTable.CanCollectStitch(skatTable.CurrentPlayer))
                 {
-                    skatTable.CanCollectStitch(skatTable.CurrentPlayer);
+                    skatTable.CollectStitch(skatTable.CurrentPlayer);
                     lastCardPlayed = DateTime.Now;
                 }
                 UpdateStatus();
@@ -493,6 +470,7 @@ namespace MynaSkat
             if (playerAction != null)
             {
                 skatTable.PerformPlayerAction(player, playerAction.Value);
+                lastCardPlayed = DateTime.Now;
             }
             if (!computerPlay)
             {
@@ -587,6 +565,18 @@ namespace MynaSkat
             if (showLastStitch)
             {
                 showLastStitch = false;
+                UpdateStatus();
+            }
+        }
+
+        private void TextBlockPlayer_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var player = GetPlayer();
+            var tb = sender as TextBlock;
+            if (player == null || sender == null) return;
+            if (e.ClickCount == 2)
+            {
+                selectedPlayer = tb.Tag as Player;
                 UpdateStatus();
             }
         }

@@ -39,6 +39,14 @@ namespace MynaSkat.Core
 
         public bool SkatTaken { get; set; } = false;
 
+        public bool GameEnded
+        {
+            get
+            {
+                return GameStarted && GamePlayer != null && !GamePlayer.Cards.Any() && !Stitch.Any();
+            }
+        }
+
         public int CurrentBidValue
         {
             get
@@ -237,7 +245,7 @@ namespace MynaSkat.Core
                 return !hasTrump;
             }
             bool hasColor = CurrentPlayer.Cards.Any((c) => !IsTrump(c) && c.Color == first.Color);
-            return first.Color == card.Color || !hasColor;
+            return !IsTrump(card) && first.Color == card.Color || !hasColor;
         }
 
         public bool IsTrump(Card card)
