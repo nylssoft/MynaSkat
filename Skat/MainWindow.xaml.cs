@@ -164,7 +164,7 @@ namespace MynaSkat
             if (skatTable != null && player != null)
             {
                 RenderPlayers(player);
-                RenderOuvertCards(player);
+                RenderOuvertOrScoreCards(player);
                 RenderSkat(player);
                 RenderLastStitch(player);
                 RenderPlayerCards(player);
@@ -210,6 +210,10 @@ namespace MynaSkat
                 {
                     radioButton.Margin = new Thickness(0, 5, 0, 0);
                 }
+                if (computerPlay)
+                {
+                    radioButton.IsEnabled = false;
+                }
                 first = false;
                 stackPanelPlayers.Children.Add(radioButton);
             }
@@ -247,7 +251,7 @@ namespace MynaSkat
                 {
                     AddActionButton(p, stat.ActionLabels[idx], ButtonAction_Click, stat.ActionTypes[idx], 150);
                 }
-                if (player == skatTable.CurrentPlayer && player == skatTable.GamePlayer)
+                if (player == skatTable.GamePlayer)
                 {
                     if (!computerPlay)
                     {
@@ -274,15 +278,23 @@ namespace MynaSkat
             p.Children.Add(b);
         }
 
-        private void RenderOuvertCards(Player player)
+        private void RenderOuvertOrScoreCards(Player player)
         {
-            List<Card> ouvertCards = null;
+            List<Card> cards = null;
             if (skatTable.GameStarted && skatTable.GamePlayer.Game.Option.HasFlag(GameOption.Ouvert) &&
                 player != skatTable.GamePlayer)
             {
-                ouvertCards = skatTable.GamePlayer.Cards;
+                cards = new List<Card>(skatTable.GamePlayer.Cards);
             }
-            RenderCards(gridOuvertCards, ouvertCards);
+            else if (skatTable.GameStarted && skatTable.GamePlayer.Cards.Count == 0 && skatTable.Stitch.Count == 0)
+            {
+                cards = new List<Card>(player.Stitches);
+                if (player == skatTable.GamePlayer)
+                {
+                    cards.AddRange(skatTable.Skat);
+                }
+            }
+            RenderCards(gridOuvertCards, cards);
         }
 
         private void RenderStitch()
@@ -391,35 +403,28 @@ namespace MynaSkat
             {
                 return;
             }
-            var player = GetPlayer();
-            if (skatTable.GameStarted && player == skatTable.CurrentPlayer && player != skatTable.GamePlayer &&
-                player.Cards.Count > 0)
+            if (skatTable.GameStarted &&  skatTable.CurrentPlayer != skatTable.GamePlayer)
             {
-                var deck = new List<Card>();
-                deck.AddRange(player.Cards);
-                using var prng = new RNGCryptoServiceProvider();
-                while (deck.Count > 0)
+                if (skatTable.CurrentPlayer.Cards.Count > 0)
                 {
-                    var card = Card.DrawOne(prng, deck);
-                    if (skatTable.IsValidForStitch(card))
+                    var deck = new List<Card>();
+                    deck.AddRange(skatTable.CurrentPlayer.Cards);
+                    using var prng = new RNGCryptoServiceProvider();
+                    while (deck.Count > 0)
                     {
-                        int idx = 0;
-                        foreach (var c in player.Cards)
+                        var card = Card.DrawOne(prng, deck);
+                        if (skatTable.IsValidForStitch(card))
                         {
-                            if (card == c)
-                            {
-                                skatTable.PlayCard(player, card);
-                                if (player != skatTable.CurrentPlayer)
-                                {
-                                    SelectActivePlayer();
-                                }
-                                lastCardPlayed = DateTime.Now;
-                                break;
-                            }
-                            idx++;
+                            skatTable.PlayCard(skatTable.CurrentPlayer, card);
+                            lastCardPlayed = DateTime.Now;
+                            break;
                         }
-                        break;
                     }
+                }
+                else if (skatTable.CanCollectStitch(skatTable.CurrentPlayer))
+                {
+                    skatTable.CanCollectStitch(skatTable.CurrentPlayer);
+                    lastCardPlayed = DateTime.Now;
                 }
                 UpdateStatus();
             }
@@ -458,13 +463,14 @@ namespace MynaSkat
 
         private void ButtonNewGame_Click(object sender, RoutedEventArgs e)
         {
+            showLastStitch = false;
+            computerPlay = false;
             skatTable.StartNewRound();
             foreach (var player in skatTable.Players)
             {
                 player.SortCards();
             }
             SelectActivePlayer();
-            showLastStitch = false;
             UpdateStatus();
         }
 
@@ -484,7 +490,10 @@ namespace MynaSkat
             {
                 skatTable.PerformPlayerAction(player, playerAction.Value);
             }
-            SelectActivePlayer();
+            if (!computerPlay)
+            {
+                SelectActivePlayer();
+            }
             UpdateStatus();
         }
 
@@ -549,7 +558,7 @@ namespace MynaSkat
             if (player == null || image == null || card == null || showLastStitch) return;
             lastCardPlayed = DateTime.Now;
             skatTable.PlayCard(player, card);
-            if (player != skatTable.CurrentPlayer)
+            if (!computerPlay && player != skatTable.CurrentPlayer)
             {
                 SelectActivePlayer();
             }
