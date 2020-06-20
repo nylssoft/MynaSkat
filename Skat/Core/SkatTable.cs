@@ -70,7 +70,7 @@ namespace MynaSkat.Core
                 return 0;
             }
         }
-       
+
         public bool BidSaid { get; set; } = false;
 
         public bool BidExceeded { get; set; } = false;
@@ -96,7 +96,7 @@ namespace MynaSkat.Core
             }
             var s = new HashSet<int>();
             // farbe
-            for (int m = 2; m<18; m++) // mit 10 spielt 11 hand 12 schneider 13 angesagt 14 schwarz 15 angesagt 16 ouvert 17
+            for (int m = 2; m < 18; m++) // mit 10 spielt 11 hand 12 schneider 13 angesagt 14 schwarz 15 angesagt 16 ouvert 17
             {
                 s.Add(m * 9);
                 s.Add(m * 10);
@@ -104,7 +104,7 @@ namespace MynaSkat.Core
                 s.Add(m * 12);
             }
             // grand
-            for (int m = 2; m<12; m++) // mit 4 spielt 5 hand 6 schneider 7 angesagt 8 schwarz 9 angesagt 10 overt 11
+            for (int m = 2; m < 12; m++) // mit 4 spielt 5 hand 6 schneider 7 angesagt 8 schwarz 9 angesagt 10 overt 11
             {
                 s.Add(m * 24);
             }
@@ -180,7 +180,7 @@ namespace MynaSkat.Core
         private int GetPlayerIdx(Player player)
         {
             int idx = 0;
-            foreach(var p in Players)
+            foreach (var p in Players)
             {
                 if (p == player) return idx;
                 idx++;
@@ -208,7 +208,7 @@ namespace MynaSkat.Core
                 Player player = stichPlayer;
                 Card greatestCard = Stitch[0];
                 Card firstCard = greatestCard;
-                for (int idx=1; idx<3; idx++)
+                for (int idx = 1; idx < 3; idx++)
                 {
                     player = GetNextPlayer(player);
                     if (IsTrump(firstCard) && IsTrump(Stitch[idx]) && IsCardGreater(GamePlayer.Game, Stitch[idx], greatestCard))
@@ -241,7 +241,7 @@ namespace MynaSkat.Core
                 {
                     return true;
                 }
-                var hasTrump = CurrentPlayer.Cards.Any( c => IsTrump(c));
+                var hasTrump = CurrentPlayer.Cards.Any(c => IsTrump(c));
                 return !hasTrump;
             }
             bool hasColor = CurrentPlayer.Cards.Any((c) => !IsTrump(c) && c.Color == first.Color);
@@ -304,6 +304,15 @@ namespace MynaSkat.Core
             var game = GamePlayer.Game;
             GameValue = game.GetGameValue(MatadorsJackStraight, GamePlayer.Stitches, Skat, CurrentBidValue);
             GamePlayer.Score += GameValue.Score;
+        }
+
+        public bool CanShowOuvertCards(Player player)
+        {
+            return GameStarted &&
+                GamePlayer != null &&
+                GamePlayer.Game.Option.HasFlag(GameOption.Ouvert) &&
+                GamePlayer != player &&
+                GamePlayer.Cards.Any();
         }
 
         public bool CanViewLastStitch(Player player)
@@ -762,9 +771,22 @@ namespace MynaSkat.Core
             }
         }
 
+        public bool CanPlayCard(Player player, Card card)
+        {
+            if (!GameStarted && GamePlayer == player && SkatTaken)
+            {
+                return Skat.Count < 2; // move card to Skat
+            }
+            if (GameStarted && CurrentPlayer == player)
+            {
+                return Stitch.Count == 3 || IsValidForStitch(card); // collect stitch or play card
+            }
+            return true;
+        }
+
         public void PlayCard(Player player, Card card)
         {
-            // druecken
+            // move card to Skat
             if (GamePlayer == player && SkatTaken && !GameStarted)
             {
                 if (Skat.Count < 2)

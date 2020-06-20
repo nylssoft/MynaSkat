@@ -127,8 +127,25 @@ namespace MynaSkat.Core
 
         public GameValue GetGameValue(MatadorsJackStraight spitzen, List<Card> stitches, List<Card> skat, int bidValue)
         {
+            var score = 0;
+            bool schneider = false;
+            bool schwarz = false;
+            bool gamePlayerSchneider = false;
+            bool gamePlayerSchwarz = false;
+            if (Type != GameType.Null)
+            {
+                if (stitches.Count == 0)
+                {
+                    gamePlayerSchwarz = true;
+                }
+                score = Card.GetScore(stitches, skat);
+                gamePlayerSchneider = score <= 30;
+                schneider = score >= 90;
+                schwarz = stitches.Count == 30;
+            }
             var gameValue = new GameValue();
-            var gameBidValue = GetBidValue(spitzen);
+            // check if bid value is exceeded considering schneider and schwarz
+            var gameBidValue = GetBidValue(spitzen, schneider, schwarz);
             if (gameBidValue < bidValue)
             {
                 int baseValue;
@@ -170,9 +187,6 @@ namespace MynaSkat.Core
                     var with = spitzen.With ? "Mit" : "Ohne";
                     game = $"{with} {spitzen.Count} spielt {spitzen.Play} ";
                     factor = spitzen.Play;
-                    var score = Card.GetScore(stitches, skat);
-                    bool schneider = score >= 90;
-                    bool schwarz = stitches.Count == 30;
                     if (Option.HasFlag(GameOption.Hand))
                     {
                         factor++;
@@ -183,7 +197,7 @@ namespace MynaSkat.Core
                         factor++;
                         game += $"Ouvert {factor} ";
                     }
-                    if (schneider)
+                    if (schneider || gamePlayerSchneider)
                     {
                         factor++;
                         game += $"Schneider {factor} ";
@@ -191,13 +205,13 @@ namespace MynaSkat.Core
                     if (Option.HasFlag(GameOption.Schneider))
                     {
                         factor++;
-                        if (!schneider)
+                        if (!schneider && !gamePlayerSchneider)
                         {
                             game += "Schneider ";
                         }
                         game += $"Angesagt {factor} ";
                     }
-                    if (schwarz)
+                    if (schwarz || gamePlayerSchwarz)
                     {
                         factor++;
                         game += $"Schwarz {factor} ";
@@ -205,7 +219,7 @@ namespace MynaSkat.Core
                     if (Option.HasFlag(GameOption.Schwarz))
                     {
                         factor++;
-                        if (!schwarz)
+                        if (!schwarz && !gamePlayerSchwarz)
                         {
                             game += "Schwarz ";
                         }
@@ -230,7 +244,7 @@ namespace MynaSkat.Core
             return gameValue;
         }
 
-        public int GetBidValue(MatadorsJackStraight jackStraight)
+        public int GetBidValue(MatadorsJackStraight jackStraight, bool schneider = false, bool schwarz = false)
         {
             if (Type == GameType.Null)
             {
@@ -253,9 +267,17 @@ namespace MynaSkat.Core
             {
                 mult++;
             }
+            if (schneider)
+            {
+                mult++;
+            }
+            if (schwarz)
+            {
+                mult++;
+            }
             return mult * GetGrandOrColorBaseValue();
         }
-        
+
         public int GetNullBaseValue()
         {
             if (Type == GameType.Null)

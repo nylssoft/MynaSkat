@@ -258,12 +258,11 @@ namespace MynaSkat
         private void RenderOuvertOrScoreCards(Player player)
         {
             List<Card> cards = null;
-            if (skatTable.GameStarted && skatTable.GamePlayer.Game.Option.HasFlag(GameOption.Ouvert) &&
-                player != skatTable.GamePlayer)
+            if (skatTable.CanShowOuvertCards(player))
             {
                 cards = new List<Card>(skatTable.GamePlayer.Cards);
             }
-            else if (skatTable.GameStarted && skatTable.GamePlayer.Cards.Count == 0 && skatTable.Stitch.Count == 0)
+            else if (skatTable.GameEnded)
             {
                 cards = new List<Card>(player.Stitches);
                 if (player == skatTable.GamePlayer)
