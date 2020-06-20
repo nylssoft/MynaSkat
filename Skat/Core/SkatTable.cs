@@ -151,6 +151,7 @@ namespace MynaSkat.Core
             GameStarted = false;
             GamePlayer = null;
             GameValue = null;
+            SkatTaken = false;
             CurrentPlayer = null;
             Stitch.Clear();
             Skat.Clear();
@@ -302,7 +303,7 @@ namespace MynaSkat.Core
                 }
             }
             var game = GamePlayer.Game;
-            GameValue = game.GetGameValue(MatadorsJackStraight, GamePlayer.Stitches, Skat, CurrentBidValue);
+            GameValue = game.GetGameValue(MatadorsJackStraight, GamePlayer.Stitches, Skat, CurrentBidValue, true);
             GamePlayer.Score += GameValue.Score;
         }
 
@@ -525,6 +526,17 @@ namespace MynaSkat.Core
                         ret.Header += $"Es sind aktuell {CurrentBidValue} angesagt. ";
                     }
                 }
+                foreach (var p in Players)
+                {
+                    if (p.Position == PlayerPosition.Rearhand)
+                    {
+                        ret.Header += p == player ? "Du hast gegeben. " : $"{p.Name} hat gegeben. ";
+                    }
+                    if (p.Position == PlayerPosition.Forehand)
+                    {
+                        ret.Header += p == player ? "Du kommst raus. " : $"{p.Name} kommt raus. ";
+                    }
+                }
             }
             // Game selection
             else if (!GameStarted)
@@ -570,6 +582,17 @@ namespace MynaSkat.Core
                 else
                 {
                     ret.Header += $"Du wartest auf die Spielansage von {GamePlayer.Name}. Es wurden {CurrentBidValue} angesagt. ";
+                }
+                foreach (var p in Players)
+                {
+                    if (p.Position == PlayerPosition.Rearhand)
+                    {
+                        ret.Header += p == player ? "Du hast gegeben. " : $"{p.Name} hat gegeben. ";
+                    }
+                    if (p.Position == PlayerPosition.Forehand)
+                    {
+                        ret.Header += p == player ? "Du kommst raus. " : $"{p.Name} kommt raus. ";
+                    }
                 }
             }
             // Game started
@@ -766,7 +789,7 @@ namespace MynaSkat.Core
             if (player.Cards.Count == 0)
             {
                 var game = GamePlayer.Game;
-                GameValue = game.GetGameValue(MatadorsJackStraight, GamePlayer.Stitches, Skat, CurrentBidValue);
+                GameValue = game.GetGameValue(MatadorsJackStraight, GamePlayer.Stitches, Skat, CurrentBidValue, false);
                 GamePlayer.Score += GameValue.Score;
             }
         }

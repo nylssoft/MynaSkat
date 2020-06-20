@@ -125,23 +125,26 @@ namespace MynaSkat.Core
             return score >= 61;
         }
 
-        public GameValue GetGameValue(MatadorsJackStraight spitzen, List<Card> stitches, List<Card> skat, int bidValue)
+        public GameValue GetGameValue(MatadorsJackStraight spitzen, List<Card> stitches, List<Card> skat, int bidValue, bool giveUp)
         {
-            var score = 0;
+            int score;
             bool schneider = false;
             bool schwarz = false;
             bool gamePlayerSchneider = false;
             bool gamePlayerSchwarz = false;
             if (Type != GameType.Null)
             {
-                if (stitches.Count == 0)
-                {
-                    gamePlayerSchwarz = true;
-                }
                 score = Card.GetScore(stitches, skat);
-                gamePlayerSchneider = score <= 30;
                 schneider = score >= 90;
                 schwarz = stitches.Count == 30;
+                if (!giveUp)
+                {
+                    if (stitches.Count == 0)
+                    {
+                        gamePlayerSchwarz = true;
+                    }
+                    gamePlayerSchneider = score <= 30;
+                }
             }
             var gameValue = new GameValue();
             // check if bid value is exceeded considering schneider and schwarz
